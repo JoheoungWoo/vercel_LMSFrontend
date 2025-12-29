@@ -15,7 +15,6 @@
 
 .App-header {
   background-color: #282c34;
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -27,101 +26,40 @@
 .App-link {
   color: #61dafb;
 }
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* 1) 커스텀 속성 타입 등록: 각도로 보간 가능하게! */
+@property --s {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 360deg;
 }
 
-li{
-  list-style-type:none!important;
-}
-@media print {
-  nav,
-  header,
-  .navbar,
-  .header,
-  #navbar,
-  #header {
-    display: none !important;
-    visibility: hidden !important;
-  }
-}
-.loader {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  display: block;
-  margin:15px auto;
-  position: relative;
-  color: #FFF;
-  box-sizing: border-box;
-  animation: animloader 2s linear infinite;
+/* 2) 유틸리티 */
+.reveal-ccw {
+  --dur: 1.1s; /* 필요하면 여기서 전체 시간을 바꿔도 됨 */
+
+  /* 마스크: 0~var(--s)까지는 투명, 나머지 보임 */
+  -webkit-mask: conic-gradient(from 0deg at 50% 50%, transparent 0 var(--s), #000 var(--s) 360deg);
+          mask: conic-gradient(from 0deg at 50% 50%, transparent 0 var(--s), #000 var(--s) 360deg);
+
+  /* 애니메이션: 등장 후 흔들림. 흔들림 시작 지연 = 등장 시간과 동일 */
+  animation:
+    ccwReveal var(--dur) cubic-bezier(.2,.65,.2,1) forwards,
+    wobble    2.4s ease-in-out var(--dur) infinite;
+
+  will-change: transform, mask;
 }
 
-@keyframes animloader {
-  0% {
-    box-shadow: 14px 0 0 -2px,  38px 0 0 -2px,  -14px 0 0 -2px,  -38px 0 0 -2px;
-  }
-  25% {
-    box-shadow: 14px 0 0 -2px,  38px 0 0 -2px,  -14px 0 0 -2px,  -38px 0 0 2px;
-  }
-  50% {
-    box-shadow: 14px 0 0 -2px,  38px 0 0 -2px,  -14px 0 0 2px,  -38px 0 0 -2px;
-  }
-  75% {
-    box-shadow: 14px 0 0 2px,  38px 0 0 -2px,  -14px 0 0 -2px,  -38px 0 0 -2px;
-  }
-  100% {
-    box-shadow: 14px 0 0 -2px,  38px 0 0 2px,  -14px 0 0 -2px,  -38px 0 0 -2px;
-  }
-}
-.loader {
-  width: 100%;
-  height: 4.8px;
-  display: inline-block;
-  position: relative;
-  background: rgba(255, 255, 255, 0.15);
-  overflow: hidden;
-}
-.loader::after {
-  content: '';
-  width: 192px;
-  height: 4.8px;
-  background: #FFF;
-  position: absolute;
-  top: 0;
-  left: 0;
-  box-sizing: border-box;
-  animation: animloader 2s linear infinite;
+/* 3) 키프레임 */
+@keyframes ccwReveal { 
+  from { --s: 360deg; }
+  to   { --s: 0deg;   }
 }
 
-@keyframes animloader {
-  0% {
-    left: 0;
-    transform: translateX(-100%);
-  }
-  100% {
-    left: 100%;
-    transform: translateX(0%);
-  }
+@keyframes wobble{
+  0%   { transform: rotate(0)       scale(1);    }
+  15%  { transform: rotate(-3deg)   scale(1.02); }
+  30%  { transform: rotate(2.2deg)  scale(1);    }
+  45%  { transform: rotate(-1.5deg) scale(1.01); }
+  60%  { transform: rotate(1deg)    scale(1);    }
+  100% { transform: rotate(0)       scale(1);    }
 }
-
-/* 임시 커스텀 마우스 커서 */
-.custom-cursor {
-  position: fixed;
-  width: 22px;
-  height: 22px;
-  border: 2px solid white;
-  border-radius: 50%;
-  pointer-events: none;        /* 클릭 영역 막지 않음 */
-  transform: translate(-50%, -50%);
-  mix-blend-mode: difference;  /* 이미지 위에서도 색 반전돼서 안 가려짐 */
-  z-index: 99999;              /* 무조건 제일 위 */
-}
-
-      
