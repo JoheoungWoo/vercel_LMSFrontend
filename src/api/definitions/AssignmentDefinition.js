@@ -1,0 +1,40 @@
+export const AssignmentDef = {
+  key: "assignment",
+  primaryKey: "assignmentId",
+  tableEng: "Assignment",
+  tableName: "과제",
+  allColumns: {
+    columns: {
+      assignmentId: "ID",
+      title: "과제명",
+      description: "설명",
+      dueDate: "마감기한",
+      maxScore: "배점",
+      classSection: "분반 정보",
+    },
+    createColumns: {
+      title: "과제명",
+      description: "설명",
+      dueDate: "마감기한",
+      maxScore: "배점",
+      classSection: "분반 ID",
+    },
+    responseColumns: {
+      assignmentId: "ID",
+      title: "과제명",
+      description: "설명",
+      dueDate: "마감기한",
+      maxScore: "배점",
+      sectionName: "분반 정보",
+    },
+    updateColumns: {
+      assignmentId: "ID",
+      title: "과제명",
+      description: "설명",
+      dueDate: "마감기한",
+      maxScore: "배점",
+    },
+  },
+  excludeList: ["description", "classSection"],
+  color: "bg-blue-100",
+};

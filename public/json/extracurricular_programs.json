@@ -1,0 +1,37 @@
+{
+  "programs": [
+    {
+      "title": "2025학년도 2학기 제5차 일취월장 학습법 워크숍",
+      "organization": "교수학습지원센터",
+      "status": "D-DAY",
+      "apply_count": 34,
+      "apply_period": "2025.10.31~2025.11.11",
+      "target": "학생",
+      "capacity": 999,
+      "button_text": "마감임박",
+      "thumbnail": "https://example.com/image1.png"
+    },
+    {
+      "title": "(2025-2) Aromatic Therapy Mindfulness Workshop",
+      "organization": "학생상담센터",
+      "status": "D-DAY",
+      "apply_count": 16,
+      "apply_period": "2025.10.30~2025.11.11",
+      "target": "학생",
+      "capacity": 13,
+      "button_text": "마감임박",
+      "thumbnail": "https://example.com/image2.png"
+    },
+    {
+      "title": "CNU, 금요 문화를 걷다(추가 모집)",
+      "organization": "충남대학교",
+      "status": "D-1",
+      "apply_count": 1,
+      "apply_period": "2025.11.11~2025.11.12",
+      "target": "학생",
+      "capacity": 7,
+      "button_text": "마감임박",
+      "thumbnail": "https://example.com/image3.png"
+    }
+  ]
+}

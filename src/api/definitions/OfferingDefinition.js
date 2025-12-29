@@ -1,0 +1,45 @@
+export const OfferingDef = {
+    key: "offering",
+    primaryKey: "offeringId",
+    tableEng: "CourseOffering",
+    tableName: "개설강의",
+    allColumns: {
+        columns: {
+            offeringId: "개설강의코드",
+            professorName: "교수이림",
+            courseName: "강의이름",
+            year: "년도",
+            semester: "학기",
+            course: "강의정보",
+            user: "유저",
+            enrollments: "수강내역들",
+            timeTables: "시간표들",
+        },
+        createColumns: {
+            courseId : "강의 식별 아이디",
+            professorId: "담당 교수 아이디",
+            courseName: "개설강의이름",
+            year: "년도",
+            semester: "학기",
+        },
+        responseColumns: {
+            offeringId: "개설강의코드",
+            professorName: "교수이름",
+            courseName: "개설강의이름",
+            year: "년도",
+            semester: "학기",
+            courseId: "강의 식별 아이디",
+        },
+        updateColumns: {
+            offeringId: "개설강의코드",
+            professorId: "담당 교수 아이디",
+            courseName: "개설 강의이름",
+            year: "년도",
+            semester: "학기",
+        },
+    },
+    columns: {},
+
+    excludeList: ["course", "user", "enrollments", "timeTables"],
+    color: "bg-yellow-100",
+}

@@ -1,0 +1,89 @@
+{
+  "student_info": {
+    "student_id": "SEWACBIM04",
+    "name_kor": "조형우",
+    "name_eng": "Jo Heoung Woo",
+    "major": "인공지능컴퓨터정보과",
+    "grade_class_ncs": "2학년/A/N1",
+    "degree_status": "비재학 / 졸업",
+    "birth": "1999-07-09",
+    "phone": "010-9965-9398",
+    "admission_type": "신입학",
+    "admission_date": "2018-02-26",
+    "photo": "https://example.com/student_photo_hidden.png"
+  },
+  "mentoring_records": [
+    {
+      "semester": "1-1학기",
+      "mentor": "서연경",
+      "credits": {
+        "earned": 22,
+        "registered": 22
+      },
+      "gpa": {
+        "total": 3.18,
+        "average": 3.18
+      },
+      "volunteer_hours": null,
+      "student_stress_report": "작성",
+      "student_learning_report": "작성",
+      "mbti_result": null,
+      "life_goal": "돈을 어느정도벌면서 도시를떠나 시골에서 편히 사는것",
+      "career_goal": null
+    },
+    {
+      "semester": "1-2학기",
+      "mentor": "서연경",
+      "credits": {
+        "earned": 42,
+        "registered": 42
+      },
+      "gpa": {
+        "total": 3.37,
+        "average": 3.275
+      },
+      "volunteer_hours": null,
+      "student_stress_report": "미작성",
+      "student_learning_report": "작성",
+      "mbti_result": null,
+      "life_goal": "돈을벌면서 조금씩 쉬는날을 늘려나가는것.",
+      "career_goal": null
+    },
+    {
+      "semester": "2-1학기",
+      "mentor": "박은서",
+      "credits": {
+        "earned": 62,
+        "registered": 62
+      },
+      "gpa": {
+        "total": 3.81,
+        "average": 3.4533
+      },
+      "volunteer_hours": 5.0,
+      "student_stress_report": "작성",
+      "student_learning_report": "작성",
+      "mbti_result": null,
+      "life_goal": "월급이 적더라도 현실적이되거나, 마음히 일하는것.",
+      "career_goal": null
+    },
+    {
+      "semester": "2-2학기",
+      "mentor": "우창헌",
+      "credits": {
+        "earned": 81,
+        "registered": 81
+      },
+      "gpa": {
+        "total": 3.8,
+        "average": 3.54
+      },
+      "volunteer_hours": 32.0,
+      "student_stress_report": "미작성",
+      "student_learning_report": "미작성",
+      "mbti_result": null,
+      "life_goal": null,
+      "career_goal": null
+    }
+  ]
+}

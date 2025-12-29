@@ -1,0 +1,63 @@
+{
+  "new_programs": [
+    {
+      "organization": "충남대학교",
+      "title": "[CTL-S Bridge][영어영문학과] 멘토링 프로그램",
+      "status": "D-3",
+      "apply_count": 7,
+      "apply_period": "2025.11.04~2025.11.14",
+      "target": "학생",
+      "capacity": 15,
+      "button_text": "마감임박",
+      "thumbnail": "https://example.com/image1.png"
+    },
+    {
+      "organization": "충남대학교",
+      "title": "2025 KB굿잡 대전 일자리 페스티벌",
+      "status": "D-3",
+      "apply_count": 28,
+      "apply_period": "2025.10.29~2025.11.14",
+      "target": "전체",
+      "capacity": 40,
+      "button_text": "마감임박",
+      "thumbnail": "https://example.com/image2.png"
+    },
+    {
+      "organization": "교수학습지원센터",
+      "title": "[파남토 녹화본] 2025학년도 2학기 제5차 일취월장 학습법 워크숍",
+      "status": "D-4",
+      "apply_count": 49,
+      "apply_period": "2025.11.03~2025.11.15",
+      "target": "학생",
+      "capacity": 999,
+      "button_text": "마감임박",
+      "thumbnail": "https://example.com/image3.png"
+    }
+  ],
+  "popular_programs": [
+    {
+      "status": "D-1",
+      "target": "학생",
+      "organization": "충남대학교",
+      "title": "* 수정 2025년 일본 기업 체험 연수 프로그램",
+      "apply_period": "2025.11.05~2025.11.12",
+      "apply_count": "95/999명"
+    },
+    {
+      "status": "D-50",
+      "target": "교직원",
+      "organization": "인권센터",
+      "title": "2025년 폭력예방교육 - 교직원(국문)",
+      "apply_period": "2025.01.01~2025.12.31",
+      "apply_count": "522/999명"
+    },
+    {
+      "status": "D-50",
+      "target": "학생",
+      "organization": "인권센터",
+      "title": "2025년 학생 대상 폭력예방교육(국문) 4분기 (10.1.~12.12.)",
+      "apply_period": "2025.10.01~2025.12.12",
+      "apply_count": "441/999명"
+    }
+  ]
+}
