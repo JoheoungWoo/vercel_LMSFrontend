@@ -9,6 +9,7 @@ import accountRouter from "./accountRouter";
 import { adminRouter } from "./adminRouter";
 import { studentRouter } from "./studentRouter";
 import { professorRouter } from "./professorRouter";
+import RealTimeSensor from "../components/etc/RealTimeSensor";
 
 const Mainlayouts = lazy(() => import("../layouts/Mainlayouts"));
 
@@ -40,6 +41,10 @@ const root = createBrowserRouter([
   {
     path: "professor",
     children: professorRouter,
+  },
+  {
+    path: "chart",
+    element: <RealTimeSensor />,
   },
 ]);
 
