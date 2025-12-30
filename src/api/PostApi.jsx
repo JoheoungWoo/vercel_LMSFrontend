@@ -22,7 +22,7 @@ const config = createTableConfig(tableDefinition, extraButtons);
 
 // ✅ 문자열이 아니라 axios 인스턴스여야 함
 const api = axios.create({
-  baseURL: "http://localhost:8080/api",
+  baseURL: "https://api.greenunivercity.store/api",
   withCredentials: true, // 필요 없으면 false로
 });
 

@@ -19,7 +19,7 @@ tableDefinition = {
 
 /* ✅ axios 인스턴스 */
 const api = axios.create({
-  baseURL: "http://localhost:8080/api",
+  baseURL: "http:/api.greenunivercity.store/api",
   withCredentials: true,
 });
 
@@ -27,12 +27,10 @@ const api = axios.create({
 export const getNotices = () => api.get("/notice/all");
 
 /** ✅ 단일 공지 조회 */
-export const getNoticeById = (noticeId) =>
-  api.get(`/notice/one/${noticeId}`);
+export const getNoticeById = (noticeId) => api.get(`/notice/one/${noticeId}`);
 
 /** ✅ 공지 생성 */
-export const createNotice = (data) =>
-  api.post("/notice/create", data);
+export const createNotice = (data) => api.post("/notice/create", data);
 
 /** ✅ 공지 수정 */
 export const updateNotice = (noticeId, data) =>
