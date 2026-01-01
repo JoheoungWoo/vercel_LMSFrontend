@@ -36,7 +36,7 @@ export const TimeTableDef = {
       courseName: "강의명", // 예: "자바 프로그래밍"
 
       //교수정보
-      professorName: "교수이름",
+      professorNiceName: "교수이름",
     },
     updateColumns: {
       timetableId: "시간표 Id",

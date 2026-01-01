@@ -19,8 +19,10 @@ export const AttendanceDef = {
       attendanceId: "이름",
       attendanceDate: "출석일",
       status: "상태",
+      getWeekString: "주차",
       enrollmentId: "수강내역",
       studentNickName: "학생이름",
+      // courseName: "과목명",
     },
     updateColumns: {
       attendanceId: "이름",

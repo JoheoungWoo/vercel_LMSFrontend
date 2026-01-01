@@ -1,5 +1,5 @@
 export const StudentScoreDef = {
-  key: "studentScore",
+  key: "student-score",
   primaryKey: "scoreId",
   tableEng: "StudentScore",
   tableName: "학생 상세 점수",

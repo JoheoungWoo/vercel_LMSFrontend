@@ -1,42 +1,26 @@
-// src/pages/studentmanagement/StudentGradeDashboard.jsx
+// src/pages/student/StudentGradeDashboard.jsx
 import React, { useState } from "react";
-import MyGrades from "../../components/features/grade/MyGrades";
-import CourseGrades from "../../components/features/grade/CourseGrades";
-import ScoreDetail from "../../components/features/grade/ScoreDetail";
-import FinalGradeView from "../../components/features/grade/FinalGradeView";
+// 🔥 통합된 컴포넌트 하나만 import
+import StudentGradeViewer from "../../components/features/grade/StudentGradeViewer";
 import AttendanceView from "../../components/features/attendance/AttendanceView";
 import ExamScheduleView from "../../components/features/exam/ExamScheduleView";
 
 /* =========================
-   Modal Types (학생용)
+   Modal Types
 ========================= */
 const modalTypes = {
-  // ───────── 성적 조회 ─────────
-  MY_GRADES: "MY_GRADES",
-  COURSE_GRADES: "COURSE_GRADES",
-  STUDENT_SCORE_DETAIL: "STUDENT_SCORE_DETAIL",
-  FINAL_GRADE: "FINAL_GRADE",
-  GPA_OVERVIEW: "GPA_OVERVIEW",
-
-  // ───────── 출결 · 시험 ─────────
+  INTEGRATED_GRADE: "INTEGRATED_GRADE", // 성적 통합 조회
   ATTENDANCE_STATUS: "ATTENDANCE_STATUS",
   EXAM_SCHEDULE: "EXAM_SCHEDULE",
-
-  // ───────── 학사 관리 ─────────
-  ACADEMIC_WARNING: "ACADEMIC_WARNING",
-  GRADE_APPEAL: "GRADE_APPEAL",
 };
 
-/* =========================
-   Main Dashboard
-========================= */
 export default function StudentGradeDashboard() {
   const [activeModal, setActiveModal] = useState(null);
   const closeModal = () => setActiveModal(null);
 
   return (
     <div className="min-h-screen bg-slate-50 px-6 py-8">
-      {/* ===== 대분류 헤더 ===== */}
+      {/* 헤더 */}
       <header className="mb-8 flex flex-col gap-2">
         <h1 className="text-2xl font-semibold text-slate-900">성적 · 학사</h1>
         <p className="text-sm text-slate-500">
@@ -44,54 +28,35 @@ export default function StudentGradeDashboard() {
         </p>
       </header>
 
-      {/* ===== 중분류 카드 ===== */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* ===============================
-            중분류 1: 성적 조회
-        =============================== */}
+        {/* === [좌측] 성적 통합 관리 === */}
         <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
           <SectionHeader
             tag="Grade"
             tagColor="indigo"
-            title="성적 조회"
-            description="학기 및 과목별 성적을 확인합니다."
-            badge="Score"
+            title="성적 통합 조회"
+            description="전체 성적, 상세 점수, 평점(GPA)을 한눈에 확인합니다."
+            badge="All-in-One"
             badgeColor="indigo"
           />
 
           <div className="space-y-3">
+            {/* 🔥 버튼 하나로 통합됨! */}
             <DashboardButton
-              label="전체 성적 조회"
-              description="학기별 전체 성적을 확인합니다."
-              onClick={() => setActiveModal(modalTypes.MY_GRADES)}
-            />
-            <DashboardButton
-              label="과목별 성적"
-              description="수강 과목별 성적을 확인합니다."
-              onClick={() => setActiveModal(modalTypes.COURSE_GRADES)}
-            />
-            <DashboardButton
-              label="상세 점수 확인"
-              description="중간 · 기말 · 과제 점수를 확인합니다."
-              onClick={() => setActiveModal(modalTypes.STUDENT_SCORE_DETAIL)}
-            />
-            <DashboardButton
-              label="최종 성적 조회"
-              description="학기별 최종 등급과 평점을 확인합니다."
-              onClick={() => setActiveModal(modalTypes.FINAL_GRADE)}
+              label="내 성적 확인하기"
+              description="이번 학기 및 전체 성적을 조회합니다."
+              onClick={() => setActiveModal(modalTypes.INTEGRATED_GRADE)}
             />
           </div>
         </section>
 
-        {/* ===============================
-            중분류 2: 출결 · 학사 관리
-        =============================== */}
+        {/* === [우측] 출결 · 학사 관리 === */}
         <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
           <SectionHeader
             tag="Academic"
             tagColor="rose"
-            title="출결 · 학사 관리"
-            description="출결, 시험 및 학사 이력을 관리합니다."
+            title="출결 · 시험 관리"
+            description="출결 현황과 시험 일정을 확인합니다."
             badge="Manage"
             badgeColor="rose"
           />
@@ -99,7 +64,7 @@ export default function StudentGradeDashboard() {
           <div className="space-y-3">
             <DashboardButton
               label="출결 현황"
-              description="출석, 지각, 결석 현황을 확인합니다."
+              description="과목별 출석/지각/결석 현황을 확인합니다."
               onClick={() => setActiveModal(modalTypes.ATTENDANCE_STATUS)}
             />
             <DashboardButton
@@ -111,15 +76,74 @@ export default function StudentGradeDashboard() {
         </section>
       </div>
 
-      {/* ===== 공통 모달 ===== */}
+      {/* 공통 모달 렌더링 */}
       <DashboardModal activeModal={activeModal} onClose={closeModal} />
     </div>
   );
 }
 
 /* =========================
-   Section Header
+   Modal Content Resolver
 ========================= */
+function DashboardModal({ activeModal, onClose }) {
+  if (!activeModal) return null;
+
+  let content = null;
+  let title = "";
+  let subtitle = "";
+
+  switch (activeModal) {
+    case modalTypes.INTEGRATED_GRADE:
+      title = "내 성적 조회";
+      subtitle = "Grade & GPA Viewer";
+      // 🔥 통합 뷰어 렌더링
+      content = <StudentGradeViewer onClose={onClose} />;
+      break;
+
+    case modalTypes.ATTENDANCE_STATUS:
+      title = "출결 현황";
+      subtitle = "Attendance Status";
+      content = <AttendanceView />;
+      break;
+
+    case modalTypes.EXAM_SCHEDULE:
+      title = "시험 일정";
+      subtitle = "Exam Schedule";
+      content = <ExamScheduleView />;
+      break;
+
+    default:
+      return null;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in">
+      {/* 모달 크기를 넉넉하게 잡음 (max-w-6xl) */}
+      <div className="w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        {/* 모달 헤더 */}
+        <div className="px-6 py-4 border-b flex justify-between items-center bg-slate-50">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+            <p className="text-xs text-slate-500 uppercase tracking-wider">
+              {subtitle}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 transition p-1 hover:bg-slate-200 rounded-full"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* 모달 바디 */}
+        <div className="flex-1 overflow-auto bg-slate-50 p-4">{content}</div>
+      </div>
+    </div>
+  );
+}
+
+// (SectionHeader, DashboardButton 컴포넌트는 기존 코드 유지)
 function SectionHeader({
   tag,
   tagColor,
@@ -128,16 +152,11 @@ function SectionHeader({
   badge,
   badgeColor,
 }) {
-  const tagColorMap = {
-    indigo: "text-indigo-500",
-    rose: "text-rose-500",
-  };
-
+  const tagColorMap = { indigo: "text-indigo-500", rose: "text-rose-500" };
   const badgeColorMap = {
     indigo: "text-indigo-500 bg-indigo-50",
     rose: "text-rose-500 bg-rose-50",
   };
-
   return (
     <div className="mb-4 flex items-center justify-between">
       <div>
@@ -158,15 +177,11 @@ function SectionHeader({
   );
 }
 
-/* =========================
-   Dashboard Button
-========================= */
 function DashboardButton({ label, description, onClick }) {
   return (
     <button
-      type="button"
       onClick={onClick}
-      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm hover:bg-white hover:shadow-sm"
+      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm hover:bg-white hover:shadow-sm transition"
     >
       <div className="flex justify-between">
         <span className="font-medium text-slate-800">{label}</span>
@@ -175,93 +190,4 @@ function DashboardButton({ label, description, onClick }) {
       <p className="mt-1 text-xs text-slate-500">{description}</p>
     </button>
   );
-}
-
-/* =========================
-   Dashboard Modal
-========================= */
-function DashboardModal({ activeModal, onClose }) {
-  if (!activeModal) return null;
-
-  const { title, subtitle, hint, content } = renderModalContent(activeModal);
-
-  return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/25">
-      <div className="w-full max-w-3xl rounded-2xl bg-white p-6 shadow-xl">
-        <div className="mb-4 flex justify-between">
-          <div>
-            <h3 className="text-lg font-semibold">{title}</h3>
-            <p className="text-xs text-slate-500">{subtitle}</p>
-          </div>
-          <button onClick={onClose}>✕</button>
-        </div>
-
-        <div className="rounded-xl border border-dashed p-4 text-xs text-slate-500">
-          {content}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* =========================
-   Modal Resolver
-========================= */
-function renderModalContent(activeModal) {
-  switch (activeModal) {
-    case modalTypes.MY_GRADES:
-      return {
-        title: "전체 성적 조회",
-        subtitle: "Grade · Semester",
-        // hint: "학기 선택 + 성적 테이블 구성을 추천합니다.",
-        content: <MyGrades />,
-      };
-
-    case modalTypes.COURSE_GRADES:
-      return {
-        title: "과목별 성적",
-        subtitle: "Grade · Course",
-        // hint: "과목별 점수 및 등급 표시를 추천합니다.",
-        content: <CourseGrades />,
-      };
-
-    case modalTypes.STUDENT_SCORE_DETAIL:
-      return {
-        title: "상세 점수 확인",
-        subtitle: "Mid · Final · Assignment",
-        // hint: "과목 선택 → 평가 항목별 점수 테이블 UI를 추천합니다.",
-        content: <ScoreDetail />,
-      };
-
-    case modalTypes.FINAL_GRADE:
-      return {
-        title: "최종 성적 조회",
-        subtitle: "Final Grade",
-        // hint: "학기별 최종 등급(A+, B 등) + 평점 요약 UI를 추천합니다.",
-        content: <FinalGradeView />,
-      };
-
-    case modalTypes.ATTENDANCE_STATUS:
-      return {
-        title: "출결 현황",
-        subtitle: "Attendance",
-        // hint: "출석/지각/결석 색상 구분 UI를 추천합니다.",
-        content: <AttendanceView />,
-      };
-
-    case modalTypes.EXAM_SCHEDULE:
-      return {
-        title: "시험 일정 조회",
-        subtitle: "Exam Schedule",
-        // hint: "캘린더 또는 리스트 UI를 추천합니다.",
-        content: <ExamScheduleView />,
-      };
-
-    default:
-      return {
-        title: "성적 · 학사",
-        subtitle: "",
-        hint: "",
-      };
-  }
 }

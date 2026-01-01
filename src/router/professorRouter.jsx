@@ -6,7 +6,9 @@ const ProfessorHomeDashboard = lazy(() =>
 );
 
 const Academic = lazy(() => import("../pages/professor/Academic"));
-const Grade = lazy(() => import("../pages/professor/Grade"));
+const Grade = lazy(() =>
+  import("../pages/professor/ProfessorGradeLmsDashboard")
+);
 const Review = lazy(() => import("../pages/professor/Review"));
 
 export const professorRouter = [

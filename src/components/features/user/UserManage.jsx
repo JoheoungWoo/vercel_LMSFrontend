@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import UserApi from "../../../api/UserApi";
+import { useSelector } from "react-redux";
 
 const UserManage = () => {
   const [users, setUsers] = useState([]);
@@ -7,10 +8,16 @@ const UserManage = () => {
   const [editing, setEditing] = useState(null);
   const [showDeleted, setShowDeleted] = useState(false);
   const [form, setForm] = useState({
+    userId: null,
+    email: "",
     nickname: "",
+    password: "",
     role: "",
     deptName: "",
+    delete: false,
   });
+
+  const userSlice = useSelector((state) => state.loginSlice);
 
   useEffect(() => {
     loadUsers();
@@ -18,7 +25,7 @@ const UserManage = () => {
 
   const loadUsers = () => {
     UserApi.config.funcs
-      .readAll()
+      .readAll(userSlice.email)
       .then((result) => {
         setUsers(result);
       })
@@ -30,15 +37,12 @@ const UserManage = () => {
   const filteredUsers = users
     .filter((u) => {
       if (showDeleted) {
-        // showDeleted 체크 시: 삭제된 사용자도 포함
         return true;
       } else {
-        // showDeleted 체크 안 할 때: 활성 사용자만
-        return !u.isDelete;
+        return !u.delete;
       }
     })
     .filter((u) => {
-      // 키워드 검색 적용
       if (!keyword) return true;
       return (
         u.nickname?.toLowerCase().includes(keyword.toLowerCase()) ||
@@ -50,49 +54,91 @@ const UserManage = () => {
   const openEdit = (user) => {
     setEditing(user);
     setForm({
+      userId: user.userId,
+      email: user.email,
       nickname: user.nickname,
+      // password: user.password,
       role: user.role,
       deptName: user.deptName,
-      isDelete: user.isDelete,
+      delete: user.delete,
     });
   };
 
   const handleSave = () => {
-    const payload = { ...form, userId: editing.userId };
+    const payload = {
+      userId: form.userId,
+      email: form.email || null,
+      nickname: form.nickname || null,
+      role: form.role || null,
+      deptName: form.deptName || null,
+      password: form.password || null,
+      delete: form.delete,
+    };
+
     UserApi.config.funcs
-      .update(editing.userId, payload)
+      .updateOne(payload, userSlice.email)
       .then(() => {
         loadUsers();
         setEditing(null);
         alert("수정되었습니다.");
       })
-      .catch(() => alert("수정 중 오류가 발생했습니다."));
+      .catch((err) => {
+        console.error("수정 실패:", err);
+        alert("수정 중 오류가 발생했습니다.");
+      });
+  };
+
+  const handlePasswordReset = () => {
+    if (!window.confirm("이 사용자의 비밀번호를 초기화하시겠습니까?")) return;
+
+    const payload = {
+      userId: editing.userId,
+      password: "reset1234!", // 초기화 비밀번호
+    };
+
+    UserApi.config.funcs
+      .updateOne(payload, userSlice.email)
+      .then(() => {
+        alert("비밀번호가 'reset1234!'로 초기화되었습니다.");
+      })
+      .catch((err) => {
+        console.error("비밀번호 초기화 실패:", err);
+        alert("비밀번호 초기화 중 오류가 발생했습니다.");
+      });
   };
 
   const handleSoftDelete = (userId) => {
     if (!window.confirm("정말 비활성화하시겠습니까?")) return;
     UserApi.config.funcs
-      .update(userId, { isDelete: true })
+      .deleteOne(userId, userSlice.email)
       .then(() => {
         loadUsers();
         alert("비활성화되었습니다.");
       })
-      .catch(() => alert("비활성화 중 오류가 발생했습니다."));
+      .catch((err) => {
+        console.error("비활성화 실패:", err);
+        alert("비활성화 중 오류가 발생했습니다.");
+      });
   };
 
   const handleRestore = (userId) => {
     if (!window.confirm("이 사용자를 복구하시겠습니까?")) return;
+
+    // restore 엔드포인트 호출
     UserApi.config.funcs
-      .update(userId, { isDelete: false })
+      .findByKeywordHttp("restore", userId, userSlice.email, "post", null)
       .then(() => {
         loadUsers();
         alert("복구되었습니다.");
       })
-      .catch(() => alert("복구 중 오류가 발생했습니다."));
+      .catch((err) => {
+        console.error("복구 실패:", err);
+        alert("복구 중 오류가 발생했습니다.");
+      });
   };
 
-  const activeCount = users.filter((u) => !u.isDelete).length;
-  const deletedCount = users.filter((u) => u.isDelete).length;
+  const activeCount = users.filter((u) => !u.delete).length;
+  const deletedCount = users.filter((u) => u.delete).length;
 
   return (
     <div className="p-6">
@@ -125,7 +171,7 @@ const UserManage = () => {
           <input
             type="checkbox"
             checked={showDeleted}
-            onChange={(e) => setShowDeleted(e.target.checked)} // 상태 업데이트
+            onChange={(e) => setShowDeleted(e.target.checked)}
             className="rounded cursor-pointer"
           />
           <span className="text-slate-600">비활성화된 사용자 표시</span>
@@ -154,13 +200,13 @@ const UserManage = () => {
               <tr
                 key={u.userId}
                 className={`border-t transition-colors ${
-                  u.isDelete
+                  u.delete
                     ? "bg-red-50/30 text-slate-400 hover:bg-red-50/50"
                     : "hover:bg-slate-50"
                 }`}
               >
                 <td className="px-4 py-3">
-                  {u.isDelete ? (
+                  {u.delete ? (
                     <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">
                       비활성
                     </span>
@@ -172,7 +218,7 @@ const UserManage = () => {
                 </td>
                 <td
                   className={`px-4 py-3 ${
-                    !u.isDelete && "font-medium text-slate-900"
+                    !u.delete && "font-medium text-slate-900"
                   }`}
                 >
                   {u.nickname}
@@ -187,7 +233,14 @@ const UserManage = () => {
                 <td className="px-4 py-3">{u.deptName || "-"}</td>
                 <td className="px-4 py-3 text-center">
                   <div className="flex justify-center gap-2">
-                    {u.isDelete === 1 ? (
+                    {u.delete ? (
+                      <button
+                        onClick={() => handleRestore(u.userId)}
+                        className="text-xs text-green-600 hover:text-green-800 hover:underline font-medium"
+                      >
+                        복구
+                      </button>
+                    ) : (
                       <>
                         <button
                           onClick={() => openEdit(u)}
@@ -203,13 +256,6 @@ const UserManage = () => {
                           비활성화
                         </button>
                       </>
-                    ) : (
-                      <button
-                        onClick={() => handleRestore(u.userId)}
-                        className="text-xs text-green-600 hover:text-green-800 hover:underline font-medium"
-                      >
-                        복구
-                      </button>
                     )}
                   </div>
                 </td>
@@ -247,6 +293,17 @@ const UserManage = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold mb-1">
+                  이메일
+                </label>
+                <input
+                  value={form.email}
+                  disabled
+                  className="w-full rounded border border-slate-300 px-3 py-2 text-sm bg-slate-50 text-slate-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-1">
                   닉네임
                 </label>
                 <input
@@ -254,6 +311,21 @@ const UserManage = () => {
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, nickname: e.target.value }))
                   }
+                  className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-1">
+                  비밀번호 (변경시만 입력)
+                </label>
+                <input
+                  type="password"
+                  value={form.password}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, password: e.target.value }))
+                  }
+                  placeholder="변경하지 않으려면 비워두세요"
                   className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
                 />
               </div>
@@ -267,9 +339,10 @@ const UserManage = () => {
                   }
                   className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
                 >
-                  <option value="STUDENT">학생</option>
-                  <option value="PROFESSOR">교수</option>
-                  <option value="ADMIN">관리자</option>
+                  <option value="STUDENT">STUDENT</option>
+                  <option value="PROFESSOR">PROFESSOR</option>
+                  <option value="ADMIN">ADMIN</option>
+                  <option value="GUEST">GUEST</option>
                 </select>
               </div>
 
@@ -282,6 +355,26 @@ const UserManage = () => {
                   }
                   className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
                 />
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={form.delete}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, delete: e.target.checked }))
+                    }
+                    className="rounded cursor-pointer"
+                    id="deleteCheck"
+                  />
+                  <label
+                    htmlFor="deleteCheck"
+                    className="text-sm font-semibold text-red-600 cursor-pointer"
+                  >
+                    비활성화 처리
+                  </label>
+                </div>
               </div>
 
               <div className="flex justify-end gap-2 pt-2">

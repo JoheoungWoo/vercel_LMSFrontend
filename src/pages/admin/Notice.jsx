@@ -195,46 +195,14 @@ function DashboardModal({ activeModal, onClose }) {
         return {
           title: "공지 등록",
           subtitle: "새 공지사항을 등록합니다.",
-          content:<AdminNotice/>
+          content: <AdminNotice />,
         };
       case modalTypes.EDIT_NOTICE:
         return {
           title: "공지 수정 / 삭제",
           subtitle: "기존 공지사항을 조회하고 수정 또는 비활성화합니다.",
           hint: "좌측 리스트에서 공지를 선택 후 우측 패널에서 내용을 수정하도록 구성하면 좋습니다.",
-          content:<AdminNoticeEdit/>
-        };
-      case modalTypes.SET_PERIOD:
-        return {
-          title: "게시 기간 설정",
-          subtitle:
-            "공지의 게시 시작일, 종료일 및 상시 게시 여부를 관리합니다.",
-          hint: "DatePicker + 토글 스위치 조합으로 UX를 구성하는 것을 추천합니다.",
-        };
-      case modalTypes.DEPT_NEWS:
-        return {
-          title: "학과 소식 / 뉴스 관리",
-          subtitle: "학과별 소식, 뉴스, 카드뉴스를 관리합니다.",
-          hint: "썸네일, 태그(전공, 학년, 유형), 메인 노출 여부 필드를 포함해보세요.",
-        };
-      case modalTypes.RESOURCE_CATEGORY:
-        return {
-          title: "자료실 카테고리 관리",
-          subtitle: "상위/하위 카테고리 구조와 정렬 순서를 설정합니다.",
-          hint: "드래그 앤 드롭 정렬 UX를 나중에 붙일 수 있도록 데이터 구조를 설계해두면 좋습니다.",
-        };
-      case modalTypes.RESOURCE_FILES:
-        return {
-          title: "파일 업로드 / 다운로드 관리",
-          subtitle:
-            "자료실 파일 업로드, 버전 관리, 다운로드 권한을 설정합니다.",
-          hint: "파일명, 버전, 용량, 업로더, 마지막 수정일, 다운로드 수 컬럼을 추천합니다.",
-        };
-      default:
-        return {
-          title: "관리 기능",
-          subtitle: "",
-          hint: "",
+          content: <AdminNoticeEdit />,
         };
     }
   };

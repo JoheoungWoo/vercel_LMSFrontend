@@ -1,8 +1,11 @@
 import axios from "axios";
-import { API_SERVER_HOST, sendAuthRequest, typeEnum } from "./commonApi";
-import { createTableConfig, excludeColumns } from "./commonApi";
-import DepartmentApi from "./DepartmentApi";
+import {
+  createTableConfig,
+  API_SERVER_HOST,
+  sendAuthRequest,
+} from "./commonApi";
 import { tableDefinitions } from "./tablesConfig";
+import DepartmentApi from "./DepartmentApi";
 
 const host = `${API_SERVER_HOST}/api/user`;
 const tableName = "user";
@@ -31,10 +34,6 @@ export const doRegister = async (a) => {
   }
 };
 
-const findByKeyword = async () => {
-  console.log("User findByKeyword");
-};
-
 const extraButtons = [];
 
 var tableDefinition = tableDefinitions[tableName];
@@ -44,7 +43,7 @@ tableDefinition = {
     ...tableDefinition.allColumns,
     searchColumns: {
       one: tableDefinition.allColumns.responseColumns,
-      role: tableDefinition.allColumns.responseColumns,
+      // role: tableDefinition.allColumns.responseColumns,
     },
   },
 };

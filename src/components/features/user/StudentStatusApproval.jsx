@@ -1,332 +1,300 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
+import SSHistoryApi from "../../../api/SSHistoryApi";
 
 const StudentStatusSystem = () => {
   const user = useSelector((state) => state.loginSlice);
-  const role = user?.role || "USER";
+  const isAdmin = user?.role === "ADMIN";
 
-  console.log("현재 사용자 ROLE:", role);
-
-  const isAdmin = role === "ADMIN";
-  const [activeTab, setActiveTab] = useState("leave");
-
-  // 결석·공결 신청
-  const [leaveRequests, setLeaveRequests] = useState([
-    {
-      id: 1,
-      type: "결석",
-      date: "2025-09-18",
-      reason: "몸살로 인한 병원 진료",
-      status: "대기",
-    },
-    {
-      id: 2,
-      type: "조퇴",
-      date: "2025-09-10",
-      reason: "가족 행사",
-      status: "승인",
-    },
-  ]);
-  const [leaveForm, setLeaveForm] = useState({
-    type: "결석",
-    date: "",
+  const [data, setData] = useState([]);
+  const [activeTab, setActiveTab] = useState("PENDING");
+  const [form, setForm] = useState({
+    changeType: "LEAVE",
     reason: "",
+    userId: "",
   });
 
-  // 복학 신청
-  const [returnRequests, setReturnRequests] = useState([
-    { id: 1, semester: "2025-2학기", reason: "휴학 사유 해소", status: "대기" },
-    { id: 2, semester: "2024-2학기", reason: "군 복무 종료", status: "승인" },
-  ]);
-  const [returnForm, setReturnForm] = useState({ semester: "", reason: "" });
-
-  const submitLeave = () => {
-    if (!leaveForm.date || !leaveForm.reason.trim()) return;
-    setLeaveRequests((prev) => [
-      { id: Date.now(), ...leaveForm, status: "대기" },
-      ...prev,
-    ]);
-    setLeaveForm({ type: "결석", date: "", reason: "" });
+  // 관리자용 데이터 조회
+  const fetchData = () => {
+    SSHistoryApi.config.funcs
+      .readAll(user?.email)
+      .then(setData)
+      .catch(console.error);
   };
 
-  const submitReturn = () => {
-    if (!returnForm.semester || !returnForm.reason.trim()) return;
-    setReturnRequests((prev) => [
-      { id: Date.now(), ...returnForm, status: "대기" },
-      ...prev,
-    ]);
-    setReturnForm({ semester: "", reason: "" });
+  // 학생용 데이터 조회
+  const studentFetchData = (statusHistoryId = null) => {
+    SSHistoryApi.config.funcs
+      .findByKeywordHttp(
+        "my",
+        null,
+        user.email,
+        "get",
+        statusHistoryId ? { statusHistoryId } : {}
+      )
+      .then(setData)
+      .catch(console.error);
   };
 
-  const handleApproval = (type, id, decision) => {
-    if (type === "leave") {
-      setLeaveRequests((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, status: decision } : r))
-      );
-    } else {
-      setReturnRequests((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, status: decision } : r))
-      );
+  // 초기 로드
+  useEffect(() => {
+    if (user?.email) {
+      if (isAdmin) {
+        fetchData();
+      } else {
+        studentFetchData(); // 학생은 전체 목록 조회
+      }
     }
+  }, [user?.email, isAdmin]);
+
+  const submit = () => {
+    if (!form.reason.trim()) {
+      alert("모든 필드를 입력하세요");
+      return;
+    }
+
+    form.userId = user.userId;
+
+    SSHistoryApi.config.funcs
+      .writeOne(form, user?.email)
+      .then((response) => {
+        console.log(form);
+        alert("제출 완료");
+        setForm({ changeType: "LEAVE", reason: "", userId: "" });
+
+        // 신청 후 해당 항목만 조회 (response에 statusHistoryId가 있다면)
+        if (response?.statusHistoryId) {
+          studentFetchData(response.statusHistoryId);
+        } else {
+          studentFetchData(); // 없으면 전체 조회
+        }
+      })
+      .catch(() => alert("제출 실패"));
   };
 
-  const statusColor = (status) => {
-    if (status === "승인") return "bg-green-100 text-green-700";
-    if (status === "반려") return "bg-red-100 text-red-600";
-    return "bg-yellow-100 text-yellow-700";
+  /* ================= ADMIN 전용 ================= */
+
+  const handleApprove = (statusHistoryId) => {
+    SSHistoryApi.config.funcs
+      .findByKeywordHttp("approved", null, user.email, "post", {
+        statusHistoryId,
+      })
+      .then(fetchData)
+      .catch(console.error);
   };
+
+  const handleReject = (statusHistoryId) => {
+    SSHistoryApi.config.funcs
+      .findByKeywordHttp("rejected", null, user.email, "post", {
+        statusHistoryId,
+      })
+      .then(fetchData)
+      .catch(console.error);
+  };
+
+  const pendingList = data.filter((v) => v.approveType === "대기");
+  const completedList = data.filter((v) => v.approveType !== "대기");
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">
-        학적 관리{" "}
-        {isAdmin && <span className="text-sm text-gray-500">(관리자)</span>}
-      </h1>
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
+      <h1 className="text-2xl font-bold">학적 관리</h1>
 
-      {/* 탭 */}
-      <div className="flex gap-2 mb-6 border-b">
-        <button
-          onClick={() => setActiveTab("leave")}
-          className={`px-4 py-2 font-medium ${
-            activeTab === "leave"
-              ? "text-blue-600 border-b-2 border-blue-600"
-              : "text-gray-500"
-          }`}
-        >
-          결석·공결 신청
-        </button>
-        <button
-          onClick={() => setActiveTab("return")}
-          className={`px-4 py-2 font-medium ${
-            activeTab === "return"
-              ? "text-blue-600 border-b-2 border-blue-600"
-              : "text-gray-500"
-          }`}
-        >
-          복학 신청
-        </button>
-      </div>
+      {/* ================= 관리자 UI ================= */}
+      {isAdmin && (
+        <>
+          {/* 탭 */}
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setActiveTab("PENDING")}
+              className={`px-4 py-2 rounded ${
+                activeTab === "PENDING"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200"
+              }`}
+            >
+              미승인
+            </button>
 
-      {/* 결석·공결 신청 */}
-      {activeTab === "leave" && (
-        <div className="space-y-6">
-          {!isAdmin && (
-            <div className="border rounded-lg p-4 bg-white">
-              <h2 className="font-semibold mb-4">신청 작성</h2>
-              <div className="space-y-3">
-                <div className="grid grid-cols-3 gap-3">
-                  <select
-                    value={leaveForm.type}
-                    onChange={(e) =>
-                      setLeaveForm((prev) => ({
-                        ...prev,
-                        type: e.target.value,
-                      }))
-                    }
-                    className="border rounded px-3 py-2"
-                  >
-                    <option value="결석">결석</option>
-                    <option value="조퇴">조퇴</option>
-                    <option value="공결">공결</option>
-                  </select>
-                  <input
-                    type="date"
-                    value={leaveForm.date}
-                    onChange={(e) =>
-                      setLeaveForm((prev) => ({
-                        ...prev,
-                        date: e.target.value,
-                      }))
-                    }
-                    className="border rounded px-3 py-2"
-                  />
-                  <input
-                    type="text"
-                    placeholder="사유 입력"
-                    value={leaveForm.reason}
-                    onChange={(e) =>
-                      setLeaveForm((prev) => ({
-                        ...prev,
-                        reason: e.target.value,
-                      }))
-                    }
-                    className="border rounded px-3 py-2"
-                  />
-                </div>
-                <button
-                  onClick={submitLeave}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  신청 제출
-                </button>
-              </div>
+            <button
+              onClick={() => setActiveTab("COMPLETED")}
+              className={`px-4 py-2 rounded ${
+                activeTab === "COMPLETED"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200"
+              }`}
+            >
+              승인/반려
+            </button>
+          </div>
+
+          {/* 미승인 */}
+          {activeTab === "PENDING" && (
+            <div className="bg-white border rounded overflow-hidden overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm">ID</th>
+                    <th className="px-4 py-3 text-left text-sm">유저ID</th>
+                    <th className="px-4 py-3 text-left text-sm">날짜</th>
+                    <th className="px-4 py-3 text-left text-sm">유형</th>
+                    <th className="px-4 py-3 text-left text-sm">사유</th>
+                    <th className="px-4 py-3 text-left text-sm">관리</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingList.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="py-6 text-center text-gray-400"
+                      >
+                        미승인 내역 없음
+                      </td>
+                    </tr>
+                  ) : (
+                    pendingList.map((item) => (
+                      <tr key={item.statusHistoryId} className="border-t">
+                        <td className="px-4 py-3">{item.statusHistoryId}</td>
+                        <td className="px-4 py-3">{item.userId}</td>
+                        <td className="px-4 py-3">{item.changeDate}</td>
+                        <td className="px-4 py-3">{item.changeType}</td>
+                        <td className="px-4 py-3">{item.reason}</td>
+                        <td className="px-4 py-3 space-x-2">
+                          <button
+                            onClick={() => handleApprove(item.statusHistoryId)}
+                            className="px-2 py-1 bg-green-500 text-white rounded"
+                          >
+                            승인
+                          </button>
+                          <button
+                            onClick={() => handleReject(item.statusHistoryId)}
+                            className="px-2 py-1 bg-red-500 text-white rounded"
+                          >
+                            반려
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           )}
 
-          <div className="border rounded-lg overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-2 text-left">유형</th>
-                  <th className="px-4 py-2 text-left">날짜</th>
-                  <th className="px-4 py-2 text-left">사유</th>
-                  <th className="px-4 py-2 text-center">상태</th>
-                  {isAdmin && <th className="px-4 py-2 text-center">관리</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {leaveRequests.map((r) => (
-                  <tr key={r.id} className="border-t">
-                    <td className="px-4 py-2">{r.type}</td>
-                    <td className="px-4 py-2">{r.date}</td>
-                    <td className="px-4 py-2">{r.reason}</td>
-                    <td className="px-4 py-2 text-center">
-                      <span
-                        className={`px-2 py-1 rounded text-xs ${statusColor(
-                          r.status
-                        )}`}
-                      >
-                        {r.status}
-                      </span>
-                    </td>
-                    {isAdmin && (
-                      <td className="px-4 py-2 text-center">
-                        {r.status === "대기" ? (
-                          <div className="flex gap-2 justify-center">
-                            <button
-                              onClick={() =>
-                                handleApproval("leave", r.id, "승인")
-                              }
-                              className="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700"
-                            >
-                              승인
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleApproval("leave", r.id, "반려")
-                              }
-                              className="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
-                            >
-                              반려
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-gray-400">
-                            처리완료
-                          </span>
-                        )}
-                      </td>
-                    )}
+          {/* 승인/반려 */}
+          {activeTab === "COMPLETED" && (
+            <div className="bg-white border rounded overflow-hidden overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm">ID</th>
+                    <th className="px-4 py-3 text-left text-sm">유저ID</th>
+                    <th className="px-4 py-3 text-left text-sm">날짜</th>
+                    <th className="px-4 py-3 text-left text-sm">유형</th>
+                    <th className="px-4 py-3 text-left text-sm">사유</th>
+                    <th className="px-4 py-3 text-left text-sm">결과</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                </thead>
+                <tbody>
+                  {completedList.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="py-6 text-center text-gray-400"
+                      >
+                        처리 내역 없음
+                      </td>
+                    </tr>
+                  ) : (
+                    completedList.map((item) => (
+                      <tr key={item.statusHistoryId} className="border-t">
+                        <td className="px-4 py-3">{item.statusHistoryId}</td>
+                        <td className="px-4 py-3">{item.userId}</td>
+                        <td className="px-4 py-3">{item.changeDate}</td>
+                        <td className="px-4 py-3">{item.changeType}</td>
+                        <td className="px-4 py-3">{item.reason}</td>
+                        <td className="px-4 py-3">{item.approveType}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
       )}
 
-      {/* 복학 신청 */}
-      {activeTab === "return" && (
-        <div className="space-y-6">
-          {!isAdmin && (
-            <div className="border rounded-lg p-4 bg-white">
-              <h2 className="font-semibold mb-4">복학 신청 작성</h2>
-              <div className="space-y-3">
-                <select
-                  value={returnForm.semester}
-                  onChange={(e) =>
-                    setReturnForm((prev) => ({
-                      ...prev,
-                      semester: e.target.value,
-                    }))
-                  }
-                  className="w-full border rounded px-3 py-2"
-                >
-                  <option value="">복학 희망 학기 선택</option>
-                  <option value="2025-1학기">2025-1학기</option>
-                  <option value="2025-2학기">2025-2학기</option>
-                  <option value="2026-1학기">2026-1학기</option>
-                </select>
-                <textarea
-                  rows={3}
-                  placeholder="복학 사유를 입력하세요"
-                  value={returnForm.reason}
-                  onChange={(e) =>
-                    setReturnForm((prev) => ({
-                      ...prev,
-                      reason: e.target.value,
-                    }))
-                  }
-                  className="w-full border rounded px-3 py-2"
-                />
-                <button
-                  onClick={submitReturn}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  복학 신청
-                </button>
-              </div>
-            </div>
-          )}
+      {/* ================= 학생 신청 UI ================= */}
+      {!isAdmin && (
+        <>
+          {/* 신청 폼 (학생) */}
+          <div className="bg-white border rounded p-4 space-y-4">
+            <div className="grid grid-cols-1 gap-3">
+              <select
+                value={form.changeType}
+                onChange={(e) =>
+                  setForm({ ...form, changeType: e.target.value })
+                }
+                className="border rounded px-3 py-2"
+              >
+                <option value="LEAVE">LEAVE</option>
+                <option value="RETURN">RETURN</option>
+                <option value="GRADUATED">GRADUATED</option>
+                <option value="EXPELLED">EXPELLED</option>
+              </select>
 
-          <div className="border rounded-lg overflow-hidden">
+              <textarea
+                placeholder="사유를 입력하세요"
+                value={form.reason}
+                onChange={(e) => setForm({ ...form, reason: e.target.value })}
+                rows={6}
+                className="border rounded px-3 py-2 resize-y"
+              />
+            </div>
+
+            <button
+              onClick={submit}
+              className="px-4 py-2 bg-blue-600 text-white rounded"
+            >
+              신청
+            </button>
+          </div>
+
+          {/* 신청 내역 */}
+          <div className="bg-white border rounded overflow-hidden">
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-2 text-left">복학 학기</th>
-                  <th className="px-4 py-2 text-left">사유</th>
-                  <th className="px-4 py-2 text-center">상태</th>
-                  {isAdmin && <th className="px-4 py-2 text-center">관리</th>}
+                  <th className="px-4 py-3 text-left text-sm">유형</th>
+                  <th className="px-4 py-3 text-left text-sm">날짜</th>
+                  <th className="px-4 py-3 text-left text-sm">사유</th>
+                  <th className="px-4 py-3 text-left text-sm">상태</th>
                 </tr>
               </thead>
               <tbody>
-                {returnRequests.map((r) => (
-                  <tr key={r.id} className="border-t">
-                    <td className="px-4 py-2">{r.semester}</td>
-                    <td className="px-4 py-2">{r.reason}</td>
-                    <td className="px-4 py-2 text-center">
-                      <span
-                        className={`px-2 py-1 rounded text-xs ${statusColor(
-                          r.status
-                        )}`}
-                      >
-                        {r.status}
-                      </span>
+                {data.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-4 py-8 text-center text-gray-400"
+                    >
+                      신청 내역 없음
                     </td>
-                    {isAdmin && (
-                      <td className="px-4 py-2 text-center">
-                        {r.status === "대기" ? (
-                          <div className="flex gap-2 justify-center">
-                            <button
-                              onClick={() =>
-                                handleApproval("return", r.id, "승인")
-                              }
-                              className="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700"
-                            >
-                              승인
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleApproval("return", r.id, "반려")
-                              }
-                              className="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
-                            >
-                              반려
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-gray-400">
-                            처리완료
-                          </span>
-                        )}
-                      </td>
-                    )}
                   </tr>
-                ))}
+                ) : (
+                  data.map((item) => (
+                    <tr key={item.statusHistoryId} className="border-t">
+                      <td className="px-4 py-3">{item.changeType}</td>
+                      <td className="px-4 py-3">{item.changeDate}</td>
+                      <td className="px-4 py-3">{item.reason}</td>
+                      <td className="px-4 py-3">{item.approveType}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

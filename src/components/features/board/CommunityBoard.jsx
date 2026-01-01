@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { getPostsByBoard } from "../../../api/BoardApi";
+import CommentApi from "../../../api/CommentApi";
+import { useSelector } from "react-redux";
 
+/* ================= 유틸 ================= */
 const pick = (obj, keys, fallback = "") => {
   for (const k of keys) {
     if (obj && obj[k] !== undefined && obj[k] !== null && obj[k] !== "")
@@ -9,194 +12,195 @@ const pick = (obj, keys, fallback = "") => {
   return fallback;
 };
 
+const getPostId = (post) => post?.postId ?? post?.id;
+
+const createTempComment = (content) => ({
+  commentId: `temp-${Date.now()}`,
+  content,
+  user: { nickname: "익명" },
+  isTemp: true,
+});
+
+/* ================= 컴포넌트 ================= */
 export default function CommunityBoard() {
-  const [active, setActive] = useState("FREE");
+  const [posts, setPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [comments, setComments] = useState({});
   const [commentInput, setCommentInput] = useState("");
-  const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const BOARDS = [
-    {
-      key: "FREE",
-      title: "자유게시판",
-      desc: "자유롭게 이야기하고 소통하세요",
-    },
-    { key: "QNA", title: "질문 게시판", desc: "질문하고 답변을 받아보세요" },
-    { key: "NOTICE", title: "공지사항", desc: "중요한 학교 공지 안내" },
-  ];
+  const loginState = useSelector((state) => state.loginSlice);
 
-  // ✅ 탭(active) 바뀔 때마다 해당 boardType으로 다시 조회
+  /* ================= 게시글 조회 ================= */
   useEffect(() => {
     setLoading(true);
-
-    getPostsByBoard(active) // ← "FREE" / "QNA" / "NOTICE"
+    getPostsByBoard()
       .then((res) => {
-        const { data } = res;
+        const data = res?.data?.data || res?.data || res;
         setPosts(Array.isArray(data) ? data : []);
       })
-      .catch((err) => {
-        console.error(err);
-        alert("게시글 불러오기 실패");
-        setPosts([]);
-      })
+      .catch(() => setPosts([]))
       .finally(() => setLoading(false));
-  }, [active]);
+  }, []);
 
-  // 댓글 추가
-  const addComment = () => {
+  /* ================= 댓글 조회 ================= */
+  const fetchComments = async (postId) => {
+    try {
+      const listFunc =
+        CommentApi?.config?.funcs?.listByPost || CommentApi?.listByPost;
+      if (!listFunc) return;
+
+      const res = await listFunc(postId);
+      const list = res?.data || res || [];
+
+      setComments((prev) => ({
+        ...prev,
+        [postId]: Array.isArray(list) ? list : [],
+      }));
+    } catch (e) {
+      console.error("댓글 로드 실패", e);
+    }
+  };
+
+  useEffect(() => {
+    if (!selectedPost) return;
+    const postId = getPostId(selectedPost);
+    if (postId) fetchComments(postId);
+  }, [selectedPost]);
+
+  /* ================= 댓글 등록 (🔥 즉시 표시) ================= */
+  const addComment = async () => {
     if (!commentInput.trim() || !selectedPost) return;
 
-    const postKey = selectedPost.postId ?? selectedPost.id; // 방어
-    if (!postKey) return;
+    const postId = getPostId(selectedPost);
+    if (!postId) return;
 
+    const tempComment = createTempComment(commentInput);
+
+    // 🔥 1. 즉시 최상단 표시
     setComments((prev) => ({
       ...prev,
-      [postKey]: [
-        ...(prev[postKey] || []),
-        { text: commentInput, date: new Date().toLocaleString() },
-      ],
+      [postId]: [tempComment, ...(prev[postId] || [])],
     }));
 
     setCommentInput("");
+
+    try {
+      // 2. 서버 저장
+      await CommentApi.create(postId, {
+        content: tempComment.content,
+        email: loginState?.email || "test@aaa.com",
+        postId,
+      });
+
+      // 3. 서버 기준 동기화
+      await fetchComments(postId);
+    } catch (e) {
+      console.error("댓글 등록 실패", e);
+
+      // ❌ 실패 시 임시 댓글 제거
+      setComments((prev) => ({
+        ...prev,
+        [postId]: (prev[postId] || []).filter(
+          (c) => c.commentId !== tempComment.commentId
+        ),
+      }));
+
+      alert("댓글 등록 실패");
+    }
   };
 
-  const selectedBoardType = pick(
-    selectedPost,
-    ["boardType", "board", "type"],
-    ""
-  );
+  const modalPostId = getPostId(selectedPost);
 
+  /* ================= 렌더 ================= */
   return (
-    <div className="w-full max-h-[80vh] overflow-y-auto bg-gradient-to-b from-sky-50 to-white px-4 py-6">
+    <div className="w-full min-h-screen bg-sky-50 px-4 py-8">
       <div className="mx-auto max-w-5xl">
-        {/* Header */}
-        <h1 className="text-3xl font-extrabold text-sky-900 mb-1">커뮤니티</h1>
-        <p className="text-sky-700 mb-5 text-sm">
-          자유게시판 · 질문 게시판 · 공지사항
-        </p>
+        <h1 className="text-3xl font-bold text-sky-900 mb-8">자유 게시판</h1>
 
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6">
-          {BOARDS.map((b) => (
-            <button
-              key={b.key}
-              onClick={() => setActive(b.key)}
-              className={`rounded-xl px-4 py-2 text-sm font-semibold
-                ${
-                  active === b.key
-                    ? "bg-sky-600 text-white"
-                    : "bg-white border border-sky-200 text-sky-700"
-                }`}
-            >
-              {b.title}
-            </button>
-          ))}
-        </div>
-
-        <section className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
+        <div className="bg-white p-6 rounded-3xl border border-sky-100">
           {loading ? (
-            <div className="text-sm text-sky-400 text-center py-6">
-              불러오는 중...
-            </div>
+            <p className="text-center py-10">로딩 중...</p>
           ) : (
-            <ul className="space-y-3">
-              {Array.isArray(posts) && posts.length > 0 ? (
-                posts.map((Post) => (
-                  <li
-                    key={Post.postId}
-                    onClick={() => setSelectedPost(Post)}
-                    className="cursor-pointer rounded-lg border border-sky-100 p-3 hover:bg-sky-50"
-                  >
-                    <div className="text-sm font-medium text-sky-900">
-                      {pick(Post, ["title"], "(제목 없음)")}
-                    </div>
-                    <div className="text-xs text-sky-600 mt-0.5">
-                      {pick(Post, ["createdAt"], "-")}
-                    </div>
-                  </li>
-                ))
-              ) : (
-                <li className="text-sm text-sky-400 text-center py-6">
-                  게시글이 없습니다.
-                </li>
-              )}
-            </ul>
+            <div className="grid gap-4">
+              {posts.map((post) => (
+                <div
+                  key={getPostId(post)}
+                  onClick={() => setSelectedPost(post)}
+                  className="cursor-pointer rounded-2xl bg-sky-50 p-5 hover:bg-white hover:shadow"
+                >
+                  <h3 className="font-bold text-lg">
+                    {pick(post, ["title"], "제목 없음")}
+                  </h3>
+                  <div className="text-xs text-sky-400 mt-2">
+                    {post.user?.nickname || "익명"}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
-        </section>
+        </div>
       </div>
 
+      {/* ================= 모달 ================= */}
       {selectedPost && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-2xl max-h-[80vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-lg">
-            {/* Header */}
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="text-xl font-bold text-sky-900">
-                {pick(selectedPost, ["title"], "(제목 없음)")}
-              </h2>
-              <button
-                onClick={() => setSelectedPost(null)}
-                className="text-sky-500 hover:text-sky-700"
-              >
-                ✕
-              </button>
-            </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+          <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-8">
+            <button
+              onClick={() => setSelectedPost(null)}
+              className="mb-4 text-sky-400"
+            >
+              ✕ 닫기
+            </button>
 
-            {/* Content */}
-            <p className="text-sky-800 mb-4 whitespace-pre-line">
-              {pick(selectedPost, ["content"], "(내용 없음)")}
+            <h2 className="text-2xl font-bold mb-4">
+              {selectedPost.title}
+            </h2>
+            <p className="mb-6 whitespace-pre-wrap">
+              {selectedPost.content}
             </p>
 
-            <div className="text-xs text-sky-500 mb-6">
-              {pick(selectedPost, ["nickname", "author", "writer"], "익명")} ·{" "}
-              {pick(selectedPost, ["createdAt", "date"], "-")}
+            <hr className="mb-4" />
+
+            <h3 className="font-bold mb-3">
+              댓글 {comments[modalPostId]?.length || 0}
+            </h3>
+
+            <div className="space-y-3 mb-4">
+              {(comments[modalPostId] || []).map((c) => (
+                <div
+                  key={c.commentId}
+                  className={`rounded-xl p-3 text-sm ${
+                    c.isTemp
+                      ? "bg-sky-100 animate-pulse"
+                      : "bg-sky-50"
+                  }`}
+                >
+                  <div className="font-bold text-sky-700">
+                    {c.user?.nickname || "익명"}
+                    {c.isTemp && (
+                      <span className="ml-2 text-xs">(등록 중)</span>
+                    )}
+                  </div>
+                  <div>{c.content}</div>
+                </div>
+              ))}
             </div>
 
-            {/* Comments / Answers */}
-            {selectedBoardType !== "NOTICE" ? (
-              <>
-                <h3 className="text-sm font-semibold text-sky-900 mb-2">
-                  {selectedBoardType === "QNA" ? "답변" : "댓글"}
-                </h3>
-
-                <ul className="space-y-2 mb-4">
-                  {(comments[selectedPost.postId] || []).map((c, i) => (
-                    <li
-                      key={i}
-                      className="rounded-lg bg-sky-50 px-3 py-2 text-sm"
-                    >
-                      {c.text}
-                      <div className="text-xs text-sky-500 mt-1">{c.date}</div>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* Input */}
-                <div className="flex gap-2">
-                  <input
-                    value={commentInput}
-                    onChange={(e) => setCommentInput(e.target.value)}
-                    className="flex-1 rounded-lg border border-sky-200 px-3 py-2 text-sm"
-                    placeholder={
-                      selectedBoardType === "QNA"
-                        ? "답변을 입력하세요"
-                        : "댓글을 입력하세요"
-                    }
-                  />
-                  <button
-                    onClick={addComment}
-                    className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700"
-                  >
-                    등록
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="text-sm text-sky-500">
-                공지사항은 댓글을 작성할 수 없습니다.
-              </div>
-            )}
+            <div className="flex gap-2">
+              <input
+                value={commentInput}
+                onChange={(e) => setCommentInput(e.target.value)}
+                className="flex-1 border rounded-xl px-4 py-2"
+                placeholder="댓글 입력..."
+              />
+              <button
+                onClick={addComment}
+                className="bg-sky-600 text-white px-4 py-2 rounded-xl font-bold"
+              >
+                등록
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
 export const GradeItemDef = {
-  key: "gradeItem",
+  key: "grade-item",
   primaryKey: "itemId", // 백엔드 DTO 기준 (ResponseDTO.itemId)
   tableEng: "GradeItem",
   tableName: "평가 항목", // 중간고사, 과제 등

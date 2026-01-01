@@ -15,7 +15,7 @@ export const PERIODS = [
   "10교시 (19:00~20:00)",
 ];
 
-const DAY_MAP = {
+export const DAY_MAP = {
   MONDAY: "월",
   TUESDAY: "화",
   WEDNESDAY: "수",
@@ -34,8 +34,8 @@ const DAY_ORDER = {
   SUNDAY: 7,
 };
 
-// ✅ mode: "my"(내꺼) 또는 "offering"(강의별)
-// ✅ id: mode가 "my"면 email, "offering"이면 offeringId
+//  mode: "my"(내꺼) 또는 "offering"(강의별)
+//  id: mode가 "my"면 email, "offering"이면 offeringId
 export const useTimetableData = (mode = "my", id) => {
   const [timeTables, setTimeTables] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -48,7 +48,7 @@ export const useTimetableData = (mode = "my", id) => {
       try {
         let data = [];
 
-        // 🔥 모드에 따라 API 골라 쓰기
+        //  모드에 따라 API 골라 쓰기
         if (mode === "my") {
           data = await TimeTableApi.config.funcs.findByKeyword("my", id);
         } else if (mode === "offering") {
@@ -93,7 +93,7 @@ export const useTimetableData = (mode = "my", id) => {
             ...t,
             name: t.courseName,
             major: t.sectionName || "일반",
-            professor: t.professorName || "미정",
+            professor: t.professorNickName || "미정",
             classroom: t.classroomName || "미정",
             isFirst: i === 0,
           };

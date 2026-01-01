@@ -35,6 +35,7 @@ export const useAttendanceManagement = (userEmail) => {
           }
         }
 
+        console.log(result);
         setData(Array.isArray(result) ? result : []);
       } catch (error) {
         console.error("출석 데이터 조회 실패:", error);

@@ -1,229 +1,353 @@
 import React, { useState } from "react";
+// 🔥 [중요] 여기서 useProfessorGrade를 import 합니다.
+import { useProfessorGrade } from "../../../hook/grade/useProfessorGrade";
 
-const GradePolicyManage = () => {
-  // ───────────────── 성적 정책 더미 ─────────────────
-  const [policies, setPolicies] = useState([
-    {
-      id: 1,
-      name: "기본 성적 정책",
-      midterm: 30,
-      final: 40,
-      assignment: 20,
-      attendance: 10,
-      active: true,
-    },
-    {
-      id: 2,
-      name: "프로젝트 중심 정책",
-      midterm: 20,
-      final: 30,
-      assignment: 40,
-      attendance: 10,
-      active: false,
-    },
-  ]);
+// 타입 선택 옵션
+const TYPE_OPTIONS = [
+  { label: "중간고사", value: "midterm" },
+  { label: "기말고사", value: "final" },
+  { label: "과제", value: "assignment" },
+  { label: "출결", value: "attendance" },
+];
 
-  // ───────────────── 신규 정책 ─────────────────
+const GradePolicyManage = ({ offeringId, userEmail }) => {
+  // 🔥 훅 이름도 useProfessorGrade로 사용
+  const {
+    items,
+    loading,
+    currentTotalWeight,
+    createItem,
+    updateItem,
+    deleteItem,
+    applyPreset,
+  } = useProfessorGrade(offeringId, userEmail);
+
+  // ───────────────── UI 상태 ─────────────────
+  const [editingId, setEditingId] = useState(null); // 수정 모드인 항목 ID
+
+  // 신규/수정 입력 폼 (공용 사용)
   const [form, setForm] = useState({
     name: "",
-    midterm: 0,
-    final: 0,
-    assignment: 0,
-    attendance: 0,
+    type: "midterm",
+    maxScore: 100,
+    weight: 0,
   });
 
-  // ───────────────── 합계 계산 ─────────────────
-  const calcTotal = (p) =>
-    Number(p.midterm) +
-    Number(p.final) +
-    Number(p.assignment) +
-    Number(p.attendance);
+  // ───────────────── 핸들러 ─────────────────
 
-  // ───────────────── 입력 처리 ─────────────────
-  const handleChange = (field, value) => {
+  // 입력 변경
+  const handleChange = (e) => {
+    const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
-      [field]: value,
+      [name]: name === "name" || name === "type" ? value : Number(value),
     }));
   };
 
-  // ───────────────── 정책 추가 ─────────────────
-  const handleAddPolicy = (e) => {
-    e.preventDefault();
+  // 등록 (Create) 버튼 클릭
+  const handleCreate = async () => {
+    if (!form.name) return alert("항목명을 입력하세요.");
+    // 100% 초과 검증 로직이 필요하면 주석 해제
+    // if (currentTotalWeight + form.weight > 100) return alert("총 합계가 100%를 초과합니다.");
 
-    if (!form.name.trim()) {
-      alert("정책명을 입력해주세요.");
-      return;
+    const success = await createItem(form);
+    if (success) {
+      setForm({ name: "", type: "midterm", maxScore: 100, weight: 0 }); // 초기화
     }
+  };
 
-    if (calcTotal(form) !== 100) {
-      alert("성적 반영 비율의 합은 100%여야 합니다.");
-      return;
-    }
+  // 수정 (Update) 모드 진입
+  const startEdit = (item) => {
+    setEditingId(item.itemId);
 
-    setPolicies((prev) => [
-      ...prev.map((p) => ({ ...p, active: false })),
-      {
-        id: Date.now(),
-        ...form,
-        active: true,
-      },
-    ]);
+    // DB Enum값(MIDTERM)을 UI value(midterm)로 변환
+    let typeValue = "midterm";
+    if (item.itemType === "FINAL") typeValue = "final";
+    else if (item.itemType === "ASSIGNMENT") typeValue = "assignment";
+    else if (item.itemType === "ATTENDANCE") typeValue = "attendance";
 
     setForm({
-      name: "",
-      midterm: 0,
-      final: 0,
-      assignment: 0,
-      attendance: 0,
+      name: item.itemName,
+      type: typeValue,
+      maxScore: item.maxScore,
+      weight: item.weightPercent,
     });
-
-    alert("새 성적 정책이 추가되었습니다. (더미)");
   };
 
-  // ───────────────── 정책 활성화 ─────────────────
-  const handleActivate = (id) => {
-    setPolicies((prev) =>
-      prev.map((p) => ({
-        ...p,
-        active: p.id === id,
-      }))
-    );
-    alert("선택한 정책이 활성화되었습니다. (더미)");
+  // 수정 저장
+  const handleUpdate = async () => {
+    const success = await updateItem(editingId, form);
+    if (success) {
+      setEditingId(null);
+      setForm({ name: "", type: "midterm", maxScore: 100, weight: 0 }); // 초기화
+    }
   };
 
-  // ───────────────── JSX ─────────────────
+  // 수정 취소
+  const cancelEdit = () => {
+    setEditingId(null);
+    setForm({ name: "", type: "midterm", maxScore: 100, weight: 0 });
+  };
+
+  // ───────────────── 렌더링 ─────────────────
   return (
-    <div className="space-y-5 text-[0.85rem]">
-      {/* 안내 */}
-      <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-slate-600">
-        ※ 성적 산정 기준은 과목 성적 계산에 즉시 반영됩니다.
-      </div>
-
-      {/* 신규 정책 등록 */}
-      <div className="rounded-md border border-slate-200 bg-white px-4 py-4">
-        <h3 className="mb-3 font-semibold text-slate-800">
-          성적 정책 등록
-        </h3>
-
-        <form
-          onSubmit={handleAddPolicy}
-          className="grid gap-3 md:grid-cols-5"
-        >
-          <input
-            type="text"
-            placeholder="정책명"
-            value={form.name}
-            onChange={(e) =>
-              handleChange("name", e.target.value)
-            }
-            className="md:col-span-5 rounded-md border border-slate-300 px-3 py-2 text-sm"
-          />
-
-          <input
-            type="number"
-            placeholder="중간 (%)"
-            value={form.midterm}
-            onChange={(e) =>
-              handleChange("midterm", e.target.value)
-            }
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-          />
-          <input
-            type="number"
-            placeholder="기말 (%)"
-            value={form.final}
-            onChange={(e) =>
-              handleChange("final", e.target.value)
-            }
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-          />
-          <input
-            type="number"
-            placeholder="과제 (%)"
-            value={form.assignment}
-            onChange={(e) =>
-              handleChange("assignment", e.target.value)
-            }
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-          />
-          <input
-            type="number"
-            placeholder="출석 (%)"
-            value={form.attendance}
-            onChange={(e) =>
-              handleChange("attendance", e.target.value)
-            }
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-          />
-
-          <div className="md:col-span-5 flex items-center justify-between">
-            <p className="text-xs text-slate-500">
-              합계: {calcTotal(form)}%
-            </p>
-            <button
-              type="submit"
-              className="rounded-md bg-sky-500 px-4 py-2 text-sm font-medium text-white hover:bg-sky-600"
-            >
-              정책 추가
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* 정책 목록 */}
-      <div className="rounded-md border border-slate-200 bg-white px-4 py-4">
-        <h3 className="mb-3 font-semibold text-slate-800">
-          성적 정책 목록
-        </h3>
-
-        <div className="space-y-3">
-          {policies.map((p) => (
-            <div
-              key={p.id}
-              className="rounded-md border border-slate-100 bg-slate-50 px-3 py-3"
-            >
-              <div className="flex items-center justify-between">
-                <p className="font-medium text-slate-800">
-                  {p.name}
-                </p>
-                {p.active ? (
-                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[0.7rem] text-emerald-700">
-                    적용 중
-                  </span>
-                ) : (
-                  <button
-                    onClick={() => handleActivate(p.id)}
-                    className="rounded-md border border-slate-300 bg-white px-2 py-1 text-[0.7rem] hover:bg-slate-50"
-                  >
-                    적용
-                  </button>
-                )}
-              </div>
-
-              <p className="mt-1 text-[0.75rem] text-slate-600">
-                중간 {p.midterm}% · 기말 {p.final}% · 과제{" "}
-                {p.assignment}% · 출석 {p.attendance}%
-              </p>
-            </div>
-          ))}
-
-          {policies.length === 0 && (
-            <p className="py-3 text-center text-slate-400">
-              등록된 성적 정책이 없습니다.
-            </p>
+    <div className="space-y-6 text-[0.85rem]">
+      {/* 1. 상단 안내 및 합계 */}
+      <div className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-4 py-3">
+        <div className="text-slate-600">
+          ※ 평가 항목을 개별적으로 추가, 수정, 삭제할 수 있습니다.
+          {!offeringId && (
+            <span className="text-red-500 font-bold ml-2">(강의 ID 없음)</span>
           )}
+        </div>
+        <div
+          className={`font-bold ${
+            currentTotalWeight === 100 ? "text-blue-600" : "text-red-500"
+          }`}
+        >
+          현재 반영 비율 합계: {currentTotalWeight}%
         </div>
       </div>
 
-      {/* 하단 안내 */}
-      <p className="text-[0.75rem] text-slate-400">
-        ※ 실제 서비스에서는 과목별 정책 적용,
-        변경 이력 관리 기능이 추가됩니다.
-      </p>
+      {loading && (
+        <div className="text-center text-blue-500 font-bold">로딩 중...</div>
+      )}
+
+      {/* 2. 현재 평가 항목 목록 (CRUD 영역) */}
+      <div className="rounded-md border border-slate-200 bg-white p-4">
+        <h3 className="mb-3 font-semibold text-slate-800">평가 항목 목록</h3>
+
+        {/* 테이블 헤더 */}
+        <div className="grid grid-cols-12 gap-2 border-b border-slate-100 pb-2 text-xs font-medium text-slate-500 text-center">
+          <div className="col-span-3 text-left pl-2">항목명</div>
+          <div className="col-span-2">유형</div>
+          <div className="col-span-2">만점</div>
+          <div className="col-span-2">비율(%)</div>
+          <div className="col-span-3">관리</div>
+        </div>
+
+        {/* 목록 리스트 */}
+        <div className="space-y-2 mt-2">
+          {items.map((item) => (
+            <div
+              key={item.itemId}
+              className="grid grid-cols-12 gap-2 items-center py-2 border-b border-slate-50 text-center text-sm"
+            >
+              {editingId === item.itemId ? (
+                // 🔹 수정 모드 (Input 표시)
+                <>
+                  <div className="col-span-3">
+                    <input
+                      name="name"
+                      value={form.name}
+                      onChange={handleChange}
+                      className="w-full border rounded px-2 py-1"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <select
+                      name="type"
+                      value={form.type}
+                      onChange={handleChange}
+                      className="w-full border rounded px-1 py-1"
+                    >
+                      {TYPE_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-span-2">
+                    <input
+                      type="number"
+                      name="maxScore"
+                      value={form.maxScore}
+                      onChange={handleChange}
+                      className="w-full border rounded px-1 py-1"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <input
+                      type="number"
+                      name="weight"
+                      value={form.weight}
+                      onChange={handleChange}
+                      className="w-full border rounded px-1 py-1"
+                    />
+                  </div>
+                  <div className="col-span-3 flex justify-center gap-1">
+                    <button
+                      onClick={handleUpdate}
+                      className="bg-emerald-500 text-white px-2 py-1 rounded text-xs"
+                    >
+                      저장
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="bg-slate-400 text-white px-2 py-1 rounded text-xs"
+                    >
+                      취소
+                    </button>
+                  </div>
+                </>
+              ) : (
+                // 🔹 조회 모드 (Text 표시)
+                <>
+                  <div className="col-span-3 text-left pl-2 font-medium">
+                    {item.itemName}
+                  </div>
+                  <div className="col-span-2 text-slate-500 text-xs">
+                    {item.itemType}
+                  </div>
+                  <div className="col-span-2">{item.maxScore}점</div>
+                  <div className="col-span-2 font-bold text-slate-700">
+                    {item.weightPercent}%
+                  </div>
+                  <div className="col-span-3 flex justify-center gap-1">
+                    <button
+                      onClick={() => startEdit(item)}
+                      className="border border-slate-300 bg-white hover:bg-slate-50 px-2 py-1 rounded text-xs"
+                    >
+                      수정
+                    </button>
+                    <button
+                      onClick={() => deleteItem(item.itemId)}
+                      className="border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 px-2 py-1 rounded text-xs"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+
+          {items.length === 0 && (
+            <p className="text-center text-slate-400 py-4">
+              등록된 평가 항목이 없습니다.
+            </p>
+          )}
+        </div>
+
+        {/* 3. 신규 항목 추가 폼 (수정 중이 아닐 때만 표시) */}
+        {!editingId && (
+          <div className="mt-4 pt-4 border-t border-slate-100 bg-slate-50/50 p-3 rounded-md">
+            <h4 className="text-xs font-bold text-slate-600 mb-2">
+              ➕ 신규 항목 추가
+            </h4>
+            <div className="grid grid-cols-12 gap-2 items-center">
+              <div className="col-span-3">
+                <input
+                  placeholder="항목명"
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm"
+                />
+              </div>
+              <div className="col-span-2">
+                <select
+                  name="type"
+                  value={form.type}
+                  onChange={handleChange}
+                  className="w-full border border-slate-300 rounded px-1 py-1.5 text-sm"
+                >
+                  {TYPE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-span-2">
+                <input
+                  type="number"
+                  placeholder="만점"
+                  name="maxScore"
+                  value={form.maxScore}
+                  onChange={handleChange}
+                  className="w-full border border-slate-300 rounded px-1 py-1.5 text-sm"
+                />
+              </div>
+              <div className="col-span-2">
+                <input
+                  type="number"
+                  placeholder="비율"
+                  name="weight"
+                  value={form.weight}
+                  onChange={handleChange}
+                  className="w-full border border-slate-300 rounded px-1 py-1.5 text-sm"
+                />
+              </div>
+              <div className="col-span-3 text-center">
+                <button
+                  onClick={handleCreate}
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-1.5 rounded text-sm transition"
+                >
+                  추가하기
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 4. 기존 프리셋 기능 (간편 설정용으로 하단에 유지) */}
+      <div className="rounded-md border border-slate-200 bg-white p-4">
+        <h3 className="mb-3 font-semibold text-slate-800">
+          빠른 설정 (프리셋)
+        </h3>
+        <p className="text-xs text-slate-500 mb-3">
+          ※ 프리셋을 적용하면 현재 등록된 모든 항목이 삭제되고 새로 설정됩니다.
+        </p>
+        <div className="grid gap-3 md:grid-cols-2">
+          <PresetCard
+            title="기본 성적 정책"
+            desc="중간 30 · 기말 30 · 과제 20 · 출석 20"
+            onApply={() =>
+              applyPreset({
+                name: "기본",
+                midterm: 30,
+                final: 30,
+                assignment: 20,
+                attendance: 20,
+              })
+            }
+          />
+          <PresetCard
+            title="프로젝트 중심"
+            desc="중간 20 · 기말 20 · 과제 50 · 출석 10"
+            onApply={() =>
+              applyPreset({
+                name: "프로젝트",
+                midterm: 20,
+                final: 20,
+                assignment: 50,
+                attendance: 10,
+              })
+            }
+          />
+        </div>
+      </div>
     </div>
   );
 };
 
-export default GradePolicyManage;
+// 프리셋 카드 컴포넌트
+const PresetCard = ({ title, desc, onApply }) => (
+  <div className="flex items-center justify-between rounded-md border border-slate-100 bg-slate-50 p-3">
+    <div>
+      <p className="font-medium text-slate-800">{title}</p>
+      <p className="text-xs text-slate-500">{desc}</p>
+    </div>
+    <button
+      onClick={onApply}
+      className="text-xs bg-white border border-slate-300 px-3 py-1.5 rounded hover:bg-slate-100"
+    >
+      적용
+    </button>
+  </div>
+);
 
+export default GradePolicyManage;

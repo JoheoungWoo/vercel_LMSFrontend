@@ -4,21 +4,35 @@ import {
   useTimetableData,
   DAYS,
   PERIODS,
+  DAY_MAP,
 } from "../../../hook/timeTable/useTimetableData"; // 훅 import
-
+import { TimeTableDef } from "../../../api/definitions/TimeTableDefinition";
 // =============================================================================
 // UI 헬퍼 & 서브 컴포넌트
 // =============================================================================
-const getBgClass = (major) => {
+
+const getBgClass = (courseName) => {
+  // 혹시 모를 공백 제거 및 안전 처리
+  const name = courseName ? courseName.trim() : "";
+
+  // 과목별 색상 매핑 (키워드 기준)
   const colors = {
-    컴퓨터공학: "bg-blue-100",
-    소프트웨어: "bg-green-100",
-    정보통신: "bg-purple-100",
-    교양: "bg-yellow-100",
-    종합설계: "bg-pink-100",
-    자율학습: "bg-gray-100",
+    자료구조: "bg-blue-100 text-blue-700",
+    알고리즘: "bg-green-100 text-green-700",
+    운영체제: "bg-purple-100 text-purple-700",
+    데이터베이스: "bg-yellow-100 text-yellow-700",
+    네트워크: "bg-pink-100 text-pink-700",
+    소프트웨어공학: "bg-indigo-100 text-indigo-700",
+    인공지능: "bg-red-100 text-red-700",
+    웹프로그래밍: "bg-orange-100 text-orange-700",
+    캡스톤디자인: "bg-teal-100 text-teal-700",
   };
-  return colors[major] || "bg-sky-100";
+
+  // 1. 이름이 키값으로 '시작'하는지 확인 (예: "자료구조A" -> "자료구조" 색상 적용)
+  const matchedKey = Object.keys(colors).find((key) => name.startsWith(key));
+
+  // 2. 매칭된 키가 있으면 그 색상 반환, 없으면 기본 하늘색
+  return matchedKey ? colors[matchedKey] : "bg-sky-100 text-sky-700";
 };
 
 // 1. 통계 카드
@@ -66,35 +80,38 @@ const GridView = ({ gridData, onSelect }) => (
             </td>
             {DAYS.map((day) => {
               const lec = gridData[day][idx];
+
+              // 1) 강의 없음
               if (!lec)
                 return (
                   <td key={day} className="border px-3 py-3 hover:bg-slate-50">
                     -
                   </td>
                 );
+
+              const colorClass = getBgClass(lec.name);
+
+              // 2) 연강 처리 (첫 시간이 아님)
               if (!lec.isFirst)
                 return (
                   <td
                     key={day}
-                    className={`border px-3 py-3 ${getBgClass(
-                      lec.major
-                    )} opacity-50 text-xs text-slate-500`}
+                    className={`border px-3 py-3 ${colorClass} opacity-50 text-xs`}
                   >
                     ▼
                   </td>
                 );
 
+              // 3) 강의 있음 (첫 시간)
               return (
                 <td
                   key={day}
                   onClick={() => onSelect(lec)}
-                  className={`border px-3 py-3 cursor-pointer transition ${getBgClass(
-                    lec.major
-                  )} hover:brightness-95`}
+                  className={`border px-3 py-3 cursor-pointer transition ${colorClass} hover:brightness-95`}
                 >
                   <div className="font-semibold text-sm">{lec.name}</div>
-                  <div className="text-xs text-slate-700">{lec.major}</div>
-                  <div className="text-xs text-slate-500">{lec.classroom}</div>
+                  <div className="text-xs opacity-80">{lec.major}</div>
+                  <div className="text-xs opacity-60">{lec.classroom}</div>
                 </td>
               );
             })}
@@ -106,50 +123,64 @@ const GridView = ({ gridData, onSelect }) => (
 );
 
 // 3. 리스트 뷰
-const ListView = ({ data }) => (
-  <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-    <table className="w-full text-left text-sm">
-      <thead className="bg-slate-50 text-slate-500">
-        <tr>
-          <th className="px-6 py-3 font-medium">요일</th>
-          <th className="px-6 py-3 font-medium">시간</th>
-          <th className="px-6 py-3 font-medium">교과목명</th>
-          <th className="px-6 py-3 font-medium">분반/교수</th>
-          <th className="px-6 py-3 font-medium">강의실</th>
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-slate-100">
-        {data.length === 0 ? (
+const ListView = ({ data }) => {
+  // 정의 파일에서 컬럼 정보 가져오기 (코드가 훨씬 깔끔해짐!)
+  const { responseColumns } = TimeTableDef.allColumns;
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <table className="w-full text-left text-sm">
+        <thead className="bg-slate-50 text-slate-500">
           <tr>
-            <td colSpan="5" className="py-10 text-center text-slate-400">
-              시간표가 없습니다.
-            </td>
+            <th className="px-6 py-3 font-medium">
+              {responseColumns.dayOfWeek}
+            </th>
+            <th className="px-6 py-3 font-medium">시간</th>
+            <th className="px-6 py-3 font-medium">
+              {responseColumns.courseName}
+            </th>
+            <th className="px-6 py-3 font-medium">
+              {responseColumns.sectionName}/{responseColumns.professorNickName}
+            </th>
+            <th className="px-6 py-3 font-medium">
+              {responseColumns.classroomName}
+            </th>
           </tr>
-        ) : (
-          data.map((t, i) => (
-            <tr key={i} className="hover:bg-slate-50">
-              <td className="px-6 py-4">
-                <span className="bg-slate-100 px-2 py-1 rounded font-bold text-xs">
-                  {t.dayOfWeek}
-                </span>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {data.length === 0 ? (
+            <tr>
+              <td colSpan="5" className="py-10 text-center text-slate-400">
+                시간표가 없습니다.
               </td>
-              <td className="px-6 py-4 text-slate-700">
-                {t.startTime?.substring(0, 5)} ~ {t.endTime?.substring(0, 5)}
-              </td>
-              <td className="px-6 py-4 font-bold text-slate-900">
-                {t.courseName}
-              </td>
-              <td className="px-6 py-4 text-slate-600">
-                {t.sectionName} / {t.professorName}
-              </td>
-              <td className="px-6 py-4 text-slate-600">{t.classroomName}</td>
             </tr>
-          ))
-        )}
-      </tbody>
-    </table>
-  </div>
-);
+          ) : (
+            data.map((t, i) => (
+              <tr key={i} className="hover:bg-slate-50">
+                <td className="px-6 py-4">
+                  <span className="bg-slate-100 px-2 py-1 rounded font-bold text-xs">
+                    {DAY_MAP[t.dayOfWeek] || t.dayOfWeek}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-slate-700">
+                  {t.startTime?.substring(0, 5)} ~ {t.endTime?.substring(0, 5)}
+                </td>
+                <td className="px-6 py-4 font-bold text-slate-900">
+                  {/* 데이터 접근 시에도 정의 파일의 Key와 일치하는지 확인 가능 */}
+                  {t.courseName}
+                </td>
+                <td className="px-6 py-4 text-slate-600">
+                  {t.sectionName} / {t.professorNickName}
+                </td>
+                <td className="px-6 py-4 text-slate-600">{t.classroomName}</td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+};
 
 // 4. 모달
 const LectureDetailModal = ({ lecture, onClose }) => {
@@ -200,11 +231,11 @@ const LectureDetailModal = ({ lecture, onClose }) => {
 // 메인 컴포넌트 (TimetableView)
 // =============================================================================
 export default function TimetableView({ onClose }) {
-  // ✅ Redux 로그인 정보 사용 (실제 서비스용)
+  //  Redux 로그인 정보 사용 (실제 서비스용)
   const loginState = useSelector((state) => state.loginSlice);
   const userEmail = loginState?.email || "student@aaa.com"; // 비로그인 시 테스트용 계정
 
-  // ✅ Custom Hook을 통해 모든 데이터 로직 처리
+  // Custom Hook을 통해 모든 데이터 로직 처리
   const { timeTables, lectureGrid, stats, loading } = useTimetableData(
     "my",
     userEmail

@@ -5,8 +5,6 @@ import { tableDefinitions } from "./tablesConfig";
 const tableName = "attendance";
 const extraButtons = [];
 
-// 1. 테이블 정의 가져오기
-// (tablesConfig.js에 'attendance' 키가 정의되어 있어야 합니다)
 const tableDefinition = tableDefinitions[tableName];
 
 // 2. [핵심] 출석 관리 전용 커스텀 API 함수들 정의

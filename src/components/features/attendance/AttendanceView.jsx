@@ -78,7 +78,10 @@ export default function AttendanceView() {
           </p>
         </div>
         <button
-          onClick={() => fetchAttendance("my", userEmail)}
+          onClick={() => {
+            fetchAttendance("my", userEmail);
+            console.log(fetchAttendance);
+          }}
           className="text-xs bg-white border px-3 py-1 rounded hover:bg-slate-50"
         >
           새로고침
