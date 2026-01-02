@@ -19,7 +19,9 @@ const Header = () => {
           </div>
         </div>
         <div>
-          <Link to={"http://localhost:3000"}>그린 대학교 학사 관리 시스템</Link>
+          <Link to={"https://vercel-lms-frontend.vercel.app/"}>
+            그린 대학교 학사 관리 시스템
+          </Link>
         </div>
         <div>{loginState.nickname}</div>
         <div>
