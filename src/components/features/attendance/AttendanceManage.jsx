@@ -5,11 +5,16 @@ import { useSelector } from "react-redux";
 import { useAttendanceManage } from "../../../hook/attendance/useAttendanceManage";
 
 // 2. 🔥 [공통 로직 재활용] 분리해둔 파일들 import
+// import {
+//   ATTENDANCE_STATUS,
+//   STATUS_OPTIONS,
+// } from "../../../constants/attendanceStatus";
+
 import {
   ATTENDANCE_STATUS,
   STATUS_OPTIONS,
-} from "../../../constants/attendanceStatus";
-import { StatusBadge } from "../../../components/common/StatusBadge"; // Named Import ({ })
+  StatusBadge,
+} from "../../../components/common/StatusBadge"; // Named Import ({ })
 import { formatDateKorean } from "../../../util/dateUtils"; // 폴더명 util 확인!
 
 export default function AttendanceManage({ offeringId }) {
