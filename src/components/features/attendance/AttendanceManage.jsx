@@ -1,125 +1,253 @@
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
 
-const AttendanceManage = () => {
-  // ───────────────── 강의 정보 (더미) ─────────────────
-  const classInfo = {
-    courseName: "웹 프로그래밍",
-    date: "2025-09-18",
+// 1. 교수용 커스텀 훅 (API 연동)
+import { useAttendanceManage } from "../../../hook/attendance/useAttendanceManage";
+
+// 2. 🔥 [공통 로직 재활용] 분리해둔 파일들 import
+import {
+  ATTENDANCE_STATUS,
+  STATUS_OPTIONS,
+} from "../../../constants/attendanceStatus";
+import { StatusBadge } from "../../../components/common/StatusBadge"; // Named Import ({ })
+import { formatDateKorean } from "../../../util/dateUtils"; // 폴더명 util 확인!
+
+export default function AttendanceManage({ offeringId }) {
+  // 로그인한 교수님 이메일 가져오기
+  const userEmail =
+    useSelector((state) => state.loginSlice?.email) || "professor@aaa.com";
+
+  // 교수용 훅 사용 (조회, 생성, 수정 기능 포함)
+  const { attendances, loading, createAttendance, updateAttendance, refresh } =
+    useAttendanceManage(offeringId, userEmail);
+
+  // ─────────────────────────────────────────────────────────────
+  // 신규 등록(Create)을 위한 입력 상태 관리
+  // ─────────────────────────────────────────────────────────────
+  const [newItem, setNewItem] = useState({
+    enrollmentId: "",
+    week: "1",
+    sessionDate: new Date().toISOString().split("T")[0], // 오늘 날짜 기본
+    status: ATTENDANCE_STATUS.PRESENT,
+  });
+
+  // 신규 등록 핸들러
+  const handleCreate = async () => {
+    if (!newItem.enrollmentId) {
+      alert("수강생 ID(Enrollment ID)를 입력해주세요.");
+      return;
+    }
+    const success = await createAttendance(newItem);
+    if (success) {
+      // 성공 시 입력창 초기화
+      setNewItem({ ...newItem, enrollmentId: "" });
+    }
   };
 
-  // ───────────────── 학생 출석 더미 ─────────────────
-  const initialStudents = [
-    { id: 1, studentId: "20250001", name: "김학생", status: "출석" },
-    { id: 2, studentId: "20250002", name: "이예제", status: "출석" },
-    { id: 3, studentId: "20250003", name: "박테스트", status: "지각" },
-    { id: 4, studentId: "20250004", name: "최샘플", status: "결석" },
-  ];
+  // ─────────────────────────────────────────────────────────────
+  // 상태 수정(Update) 핸들러
+  // ─────────────────────────────────────────────────────────────
+  const handleStatusChange = async (item, newStatus) => {
+    // item이 없거나 item 안에 attendanceId가 없으면 중단
+    if (!item || !item.attendanceId) {
+      console.error("오류: attendanceId가 없습니다.", item);
+      return;
+    }
 
-  const [students, setStudents] = useState(initialStudents);
-
-  // ───────────────── 출석 상태 변경 ─────────────────
-  const handleStatusChange = (id, value) => {
-    setStudents((prev) =>
-      prev.map((s) =>
-        s.id === id ? { ...s, status: value } : s
-      )
-    );
+    // 훅 함수에 item 통째로 전달
+    await updateAttendance(item, newStatus);
   };
 
-  // ───────────────── 저장 (더미) ─────────────────
-  const handleSave = () => {
-    alert("출석 정보가 저장되었습니다. (더미)");
-    console.log("저장된 출석 데이터:", students);
-  };
-
-  // ───────────────── JSX ─────────────────
   return (
-    <div className="space-y-4 text-[0.85rem]">
-      {/* 안내 */}
-      <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-slate-600">
-        ※ 오늘 수업의 출석 상태를 기록하는 화면입니다.
-      </div>
+    <div className="w-full space-y-6 p-4">
+      {/* ──────────────── 상단 헤더 & 신규 등록 폼 ──────────────── */}
+      <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-6 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* 1. 수강생 ID 입력 */}
+            <div>
+              <label className="block text-xs font-bold text-indigo-900 mb-1">
+                수강생 ID (Enrollment)
+              </label>
+              <input
+                type="number"
+                value={newItem.enrollmentId}
+                onChange={(e) =>
+                  setNewItem({ ...newItem, enrollmentId: e.target.value })
+                }
+                placeholder="예: 101"
+                className="w-full text-sm border-indigo-200 rounded-md focus:ring-indigo-500"
+              />
+            </div>
 
-      {/* 수업 정보 */}
-      <div className="rounded-md border border-slate-200 bg-white px-4 py-3">
-        <h3 className="font-semibold text-slate-800">
-          출석 관리
-        </h3>
-        <p className="mt-1 text-[0.75rem] text-slate-500">
-          과목: {classInfo.courseName} · 날짜: {classInfo.date}
-        </p>
-      </div>
-
-      {/* 출석 테이블 */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse">
-          <thead>
-            <tr className="border-b border-slate-200 bg-slate-50 text-left text-slate-600">
-              <th className="px-2 py-2">학번</th>
-              <th className="px-2 py-2">이름</th>
-              <th className="px-2 py-2 text-center">출석 상태</th>
-            </tr>
-          </thead>
-          <tbody>
-            {students.map((s, idx) => (
-              <tr
-                key={s.id}
-                className={`border-b border-slate-100 ${
-                  idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"
-                }`}
+            {/* 2. 주차 선택 */}
+            <div>
+              <label className="block text-xs font-bold text-indigo-900 mb-1">
+                주차
+              </label>
+              <select
+                value={newItem.week}
+                onChange={(e) =>
+                  setNewItem({ ...newItem, week: e.target.value })
+                }
+                className="w-full text-sm border-indigo-200 rounded-md focus:ring-indigo-500"
               >
-                <td className="px-2 py-1.5 text-slate-700">
-                  {s.studentId}
-                </td>
-                <td className="px-2 py-1.5 text-slate-800">
-                  {s.name}
-                </td>
-                <td className="px-2 py-1.5 text-center">
-                  <select
-                    value={s.status}
-                    onChange={(e) =>
-                      handleStatusChange(s.id, e.target.value)
-                    }
-                    className="rounded-md border border-slate-300 bg-white px-2 py-1 text-[0.75rem] focus:outline-none focus:ring-1 focus:ring-sky-400"
-                  >
-                    <option value="출석">출석</option>
-                    <option value="지각">지각</option>
-                    <option value="결석">결석</option>
-                  </select>
-                </td>
-              </tr>
-            ))}
-            {students.length === 0 && (
-              <tr>
-                <td
-                  colSpan={3}
-                  className="px-2 py-4 text-center text-slate-400"
-                >
-                  학생이 없습니다.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                {[...Array(16)].map((_, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    {i + 1}주차
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* 3. 날짜 선택 */}
+            <div>
+              <label className="block text-xs font-bold text-indigo-900 mb-1">
+                수업 날짜
+              </label>
+              <input
+                type="date"
+                value={newItem.sessionDate}
+                onChange={(e) =>
+                  setNewItem({ ...newItem, sessionDate: e.target.value })
+                }
+                className="w-full text-sm border-indigo-200 rounded-md focus:ring-indigo-500"
+              />
+            </div>
+
+            {/* 4. 초기 상태 선택 (공통 상수 활용) */}
+            <div>
+              <label className="block text-xs font-bold text-indigo-900 mb-1">
+                상태
+              </label>
+              <select
+                value={newItem.status}
+                onChange={(e) =>
+                  setNewItem({ ...newItem, status: e.target.value })
+                }
+                className="w-full text-sm border-indigo-200 rounded-md focus:ring-indigo-500"
+              >
+                {STATUS_OPTIONS.filter((opt) => opt.value !== "ALL").map(
+                  (opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+          </div>
+
+          {/* 등록 버튼 */}
+          <button
+            onClick={handleCreate}
+            className="h-10 px-6 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-md shadow transition"
+          >
+            + 등록하기
+          </button>
+        </div>
       </div>
 
-      {/* 저장 버튼 */}
-      <div className="flex justify-end">
+      {/* ──────────────── 출결 목록 테이블 (수정 기능 포함) ──────────────── */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-bold text-slate-800">
+          출결 현황{" "}
+          <span className="text-sm font-normal text-slate-500">
+            ({attendances.length}건)
+          </span>
+        </h3>
         <button
-          onClick={handleSave}
-          className="rounded-md bg-emerald-500 px-4 py-1.5 text-[0.8rem] font-medium text-white hover:bg-emerald-600"
+          onClick={refresh}
+          className="text-sm text-slate-500 hover:text-indigo-600 underline"
         >
-          출석 저장
+          새로고침
         </button>
       </div>
 
-      {/* 안내 */}
-      <p className="text-[0.75rem] text-slate-400">
-        ※ 실제 서비스에서는 출석 수정 제한, 결석 사유 승인 여부 반영,
-        자동 출석 계산이 서버에서 처리됩니다.
-      </p>
+      {loading ? (
+        <div className="py-20 text-center text-slate-500">
+          데이터 로딩 중...
+        </div>
+      ) : attendances.length === 0 ? (
+        <div className="py-20 text-center text-slate-500 border border-dashed rounded-xl">
+          등록된 출결 데이터가 없습니다.
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm bg-white">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  주차
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  학생명 (ID)
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  날짜
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  현재 상태
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  상태 변경
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-slate-200">
+              {attendances.map((item) => (
+                <tr
+                  key={item.attendanceId}
+                  className="hover:bg-slate-50 transition"
+                >
+                  {/* 1. 주차 */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+                    {item.week}주차
+                  </td>
+
+                  {/* 2. 학생 정보 */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                    <span className="font-bold text-slate-800">
+                      {item.studentNickName}
+                    </span>
+                    <span className="text-xs text-slate-400 ml-1">
+                      ({item.enrollmentId})
+                    </span>
+                  </td>
+
+                  {/* 3. 날짜 (공통 유틸 사용) */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                    {formatDateKorean(item.sessionDate || item.attendanceDate)}
+                  </td>
+
+                  {/* 4. 현재 상태 뱃지 (공통 컴포넌트 사용) */}
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <StatusBadge status={item.status} />
+                  </td>
+
+                  {/* 5. 상태 변경 드롭다운 (즉시 수정) */}
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <select
+                      value={item.status}
+                      onChange={(e) => handleStatusChange(item, e.target.value)}
+                      className="text-sm border-slate-300 rounded px-2 py-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer hover:bg-slate-50"
+                    >
+                      {/* 공통 상수 활용하여 옵션 생성 */}
+                      {STATUS_OPTIONS.filter((opt) => opt.value !== "ALL").map(
+                        (opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
-};
-
-export default AttendanceManage;
+}

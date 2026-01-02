@@ -18,7 +18,7 @@ const GradePolicyManage = ({ offeringId, userEmail }) => {
     currentTotalWeight,
     createItem,
     updateItem,
-    deleteItem,
+    // deleteItem,
     applyPreset,
   } = useProfessorGrade(offeringId, userEmail);
 
@@ -207,16 +207,16 @@ const GradePolicyManage = ({ offeringId, userEmail }) => {
                   <div className="col-span-3 flex justify-center gap-1">
                     <button
                       onClick={() => startEdit(item)}
-                      className="border border-slate-300 bg-white hover:bg-slate-50 px-2 py-1 rounded text-xs"
+                      className="border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 px-2 py-1 rounded text-xs"
                     >
                       수정
                     </button>
-                    <button
+                    {/* <button
                       onClick={() => deleteItem(item.itemId)}
                       className="border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 px-2 py-1 rounded text-xs"
                     >
                       삭제
-                    </button>
+                    </button> */}
                   </div>
                 </>
               )}

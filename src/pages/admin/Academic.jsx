@@ -5,7 +5,7 @@ import TermManage from "../../components/features/academic/TermManage";
 import CourseOfferingManage from "../../components/features/academic/CourseOfferingManage";
 import CourseManage from "../../components/features/academic/CourseManage";
 import ClassSectionManage from "../../components/features/academic/ClassSectionManage";
-import TimetableManage from "../../components/features/academic/TimetableManage";
+import TimeTableManager from "../../components/features/academic/TimeTableManager";
 
 /* =========================
    Modal Types (관리자용)
@@ -18,7 +18,7 @@ const modalTypes = {
   COURSE_OFFERING: "COURSE_OFFERING",
 
   CLASS_SECTION: "CLASS_SECTION",
-  TIMETABLE_MANAGE: "TIMETABLE_MANAGE",
+  TIMETABLE_MANAGER: "TIMETABLE_MANAGER",
 };
 
 /* =========================
@@ -124,14 +124,18 @@ export default function AdminAcademicDashboard() {
             <DashboardButton
               label="시간표 관리"
               description="강의실 배정 및 시간표를 입력합니다."
-              onClick={() => setActiveModal(modalTypes.TIMETABLE_MANAGE)}
+              onClick={() => setActiveModal(modalTypes.TIMETABLE_MANAGER)}
             />
           </div>
         </section>
       </div>
 
       {/* ===== 공통 모달 ===== */}
-      <DashboardModal activeModal={activeModal} onClose={closeModal} />
+      <DashboardModal
+        activeModal={activeModal}
+        onClose={closeModal}
+        modalContent={activeModal ? renderModalContent(activeModal) : null}
+      />
     </div>
   );
 }
@@ -203,32 +207,35 @@ function DashboardButton({ label, description, onClick }) {
 /* =========================
    Dashboard Modal
 ========================= */
-function DashboardModal({ activeModal, onClose }) {
-  if (!activeModal) return null;
+function DashboardModal({ activeModal, onClose, modalContent }) {
+  if (!activeModal || !modalContent) return null;
 
-  const { title, subtitle, hint, content } = renderModalContent(activeModal);
+  const { title, subtitle, content } = modalContent;
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/25">
-      {/* 모달 컨테이너: 최대 높이 제한 */}
-      <div className="w-full max-w-3xl max-h-[80vh] rounded-2xl bg-white p-6 shadow-xl overflow-hidden">
-        <div className="mb-4 flex justify-between">
+      <div className="w-full max-w-3xl rounded-2xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+        {/* 헤더 영역 */}
+        <div className="mb-4 flex justify-between items-start">
           <div>
             <h3 className="text-lg font-semibold">{title}</h3>
             <p className="text-xs text-slate-500">{subtitle}</p>
           </div>
-          <button onClick={onClose}>✕</button>
+          <button
+            onClick={onClose}
+            className="p-2 text-slate-400 hover:text-slate-600"
+          >
+            ✕
+          </button>
         </div>
 
-        {/* 콘텐츠 영역: 스크롤 처리 */}
-        <div className="rounded-xl border border-dashed p-4 text-xs text-slate-500 max-h-[60vh] overflow-y-auto">
+        <div className="rounded-xl border border-dashed p-4 text-xs text-slate-500">
           {content}
         </div>
       </div>
     </div>
   );
 }
-
 /* =========================
    Modal Resolver
 ========================= */
@@ -266,12 +273,12 @@ function renderModalContent(activeModal) {
         content: <ClassSectionManage />,
       };
 
-    case modalTypes.TIMETABLE_MANAGE:
+    case modalTypes.TIMETABLE_MANAGER:
       return {
         title: "시간표 관리",
         subtitle: "TimeTable · Classroom",
         // hint: "요일/교시 기반 시간표 + 강의실 중복 체크 로직을 추천합니다.",
-        content: <TimetableManage />,
+        content: <TimeTableManager />,
       };
 
     default:

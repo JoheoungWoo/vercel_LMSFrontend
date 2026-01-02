@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-// 🔥 [추가] 강의 목록 조회를 위한 API (없으면 axios 직접 사용)
 import axios from "axios";
 import { API_SERVER_HOST } from "../../api/commonApi";
 

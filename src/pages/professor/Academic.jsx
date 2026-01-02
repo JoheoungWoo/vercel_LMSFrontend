@@ -194,7 +194,7 @@ function DashboardModal({ activeModal, onClose }) {
 
   const { title, subtitle, content } = renderModalContent(activeModal);
 
-  // 🔥 시간표 관리일 때만 모달을 넓게(Wide) 설정
+  // 시간표 관리일 때만 모달을 넓게(Wide) 설정
   const isWideModal = activeModal === modalTypes.TIMETABLE_MANAGEMENT;
 
   return (

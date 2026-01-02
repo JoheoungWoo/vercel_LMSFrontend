@@ -20,7 +20,7 @@ tableDefinition = {
 const config = createTableConfig(tableDefinition, extraButtons);
 
 const api = axios.create({
-  baseURL: "https://api.greenunivercity.store/api",
+  baseURL: "http://localhost:8080/api",
   withCredentials: true,
 });
 

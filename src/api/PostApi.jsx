@@ -22,7 +22,7 @@ const config = createTableConfig(tableDefinition, extraButtons);
 
 // ✅ 문자열이 아니라 axios 인스턴스여야 함
 const api = axios.create({
-  baseURL: "https://api.greenunivercity.store/api",
+  baseURL: "http://localhost:8080/api",
   withCredentials: true, // 필요 없으면 false로
 });
 
@@ -66,11 +66,11 @@ export const deletePost = async (postId, email = "test@aaa.com") => {
 export const getCommentsByPost = (postId) =>
   api.get(`/posts/${postId}/comment`);
 
-export default {
-  config,
-  getPosts,
-  getPostDetail,
-  createPost,
-  updatePost,
-  deletePost,
+export default { 
+  config, 
+  getPosts, 
+  getPostDetail, 
+  createPost, 
+  updatePost, 
+  deletePost 
 };

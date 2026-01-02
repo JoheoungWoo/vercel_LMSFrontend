@@ -96,19 +96,19 @@ export const useProfessorGrade = (offeringId, userEmail) => {
   };
 
   // ───────────────── 4. 삭제 (Delete) ─────────────────
-  const deleteItem = async (itemId) => {
-    if (!window.confirm("정말 이 평가 항목을 삭제하시겠습니까?")) return;
-    setLoading(true);
-    try {
-      await GradeItemApi.config.funcs.deleteOne(itemId, userEmail);
-      await fetchItems();
-    } catch (error) {
-      console.error("항목 삭제 실패:", error);
-      alert("삭제 실패");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const deleteItem = async (itemId) => {
+  //   if (!window.confirm("정말 이 평가 항목을 삭제하시겠습니까?")) return;
+  //   setLoading(true);
+  //   try {
+  //     await GradeItemApi.config.funcs.deleteOne(itemId, userEmail);
+  //     await fetchItems();
+  //   } catch (error) {
+  //     console.error("항목 삭제 실패:", error);
+  //     alert("삭제 실패");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   // ───────────────── 5. 프리셋 일괄 적용 ─────────────────
   const applyPreset = async (preset) => {
@@ -179,7 +179,7 @@ export const useProfessorGrade = (offeringId, userEmail) => {
     currentTotalWeight,
     createItem,
     updateItem,
-    deleteItem,
+    // deleteItem,
     applyPreset,
   };
 };
