@@ -11,7 +11,7 @@ const CourseReviewView = () => {
   // 관리자용 데이터 조회
   const fetchData = () => {
     ReviewApi.config.funcs
-      .readAll(user?.email)
+      .findByKeywordHttp("my", null, user.email, "get")
       .then((result) => {
         console.log(result);
         setData(result);

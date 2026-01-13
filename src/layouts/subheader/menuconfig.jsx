@@ -8,10 +8,10 @@ export const menus = {
     },
 
     // ───────── 재정 관리 ─────────
-    {
-      label: "재정 관리",
-      to: "/admin/finance",
-    },
+    // {
+    //   label: "재정 관리",
+    //   to: "/admin/finance",
+    // },
 
     // ───────── 시스템 관리 ─────────
     {
@@ -62,10 +62,10 @@ export const menus = {
     },
 
     // ───────── 등록금 · 재정 ─────────
-    {
-      label: "재정 정보",
-      to: "/student/finance",
-    },
+    // {
+    //   label: "재정 정보",
+    //   to: "/student/finance",
+    // },
 
     // ───────── 성적 조회 ─────────
     {

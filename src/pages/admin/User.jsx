@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import UserManage from "../../components/features/user/UserManage";
 import UserCreate from "../../components/features/user/UserCreate";
 import StudentStatusApproval from "../../components/features/user/StudentStatusApproval";
+import { DashboardModal } from "../../components/common/DashboardModal";
 
 /* =========================
    Modal Types (소분류)
@@ -65,7 +66,12 @@ export default function UserManagementDashboard() {
       </div>
 
       {/* ===== 공통 모달 ===== */}
-      <DashboardModal activeModal={activeModal} onClose={closeModal} />
+      {/* <DashboardModal activeModal={activeModal} onClose={closeModal} /> */}
+      <DashboardModal
+        activeModal={activeModal}
+        onClose={closeModal}
+        renderModalContent={renderModalContent}
+      />
     </div>
   );
 }
@@ -131,27 +137,38 @@ function DashboardButton({ label, description, onClick }) {
 /* =========================
    Dashboard Modal
 ========================= */
-function DashboardModal({ activeModal, onClose }) {
-  if (!activeModal) return null;
+// function DashboardModal({ activeModal, onClose }) {
+//   if (!activeModal) return null;
 
-  const { title, subtitle, content } = renderModalContent(activeModal);
+//   // ✅ 기존 로직 그대로 사용
+//   const { title, subtitle, content } = renderModalContent(activeModal);
 
-  return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/25">
-      <div className="w-full max-w-3xl rounded-2xl bg-white p-6 shadow-xl">
-        <div className="mb-4 flex justify-between">
-          <div>
-            <h3 className="text-lg font-semibold">{title}</h3>
-            <p className="text-xs text-slate-500">{subtitle}</p>
-          </div>
-          <button onClick={onClose}>✕</button>
-        </div>
+//   return (
+//     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/25">
+//       {/* 모달 컨테이너 (높이 제한) */}
+//       <div className="w-full max-w-3xl max-h-[80vh] rounded-2xl bg-white p-6 shadow-xl overflow-hidden">
+//         {/* 헤더 영역 (고정) */}
+//         <div className="mb-4 flex items-start justify-between">
+//           <div>
+//             <h3 className="text-lg font-semibold">{title}</h3>
+//             <p className="text-xs text-slate-500">{subtitle}</p>
+//           </div>
+//           <button
+//             onClick={onClose}
+//             className="p-2 text-slate-400 hover:text-slate-600"
+//           >
+//             ✕
+//           </button>
+//         </div>
 
-        <div className="rounded-xl border border-dashed p-4">{content}</div>
-      </div>
-    </div>
-  );
-}
+//         {/* 콘텐츠 영역 (스크롤) */}
+//         <div className="max-h-[60vh] overflow-y-auto rounded-xl border border-dashed p-4 text-xs text-slate-500">
+//           {content}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 
 /* =========================
    Modal Resolver

@@ -3,7 +3,7 @@ import React, { useState } from "react";
 // 🔥 통합된 컴포넌트 하나만 import
 import StudentGradeViewer from "../../components/features/grade/StudentGradeViewer";
 import AttendanceView from "../../components/features/attendance/AttendanceView";
-import ExamScheduleView from "../../components/features/exam/ExamScheduleView";
+// import ExamScheduleView from "../../components/features/exam/ExamScheduleView";
 
 /* =========================
    Modal Types
@@ -67,11 +67,11 @@ export default function StudentGradeDashboard() {
               description="과목별 출석/지각/결석 현황을 확인합니다."
               onClick={() => setActiveModal(modalTypes.ATTENDANCE_STATUS)}
             />
-            <DashboardButton
+            {/* <DashboardButton
               label="시험 일정 조회"
               description="중간·기말 시험 일정을 확인합니다."
               onClick={() => setActiveModal(modalTypes.EXAM_SCHEDULE)}
-            />
+            /> */}
           </div>
         </section>
       </div>
@@ -106,11 +106,11 @@ function DashboardModal({ activeModal, onClose }) {
       content = <AttendanceView />;
       break;
 
-    case modalTypes.EXAM_SCHEDULE:
-      title = "시험 일정";
-      subtitle = "Exam Schedule";
-      content = <ExamScheduleView />;
-      break;
+    // case modalTypes.EXAM_SCHEDULE:
+    //   title = "시험 일정";
+    //   subtitle = "Exam Schedule";
+    //   content = <ExamScheduleView />;
+    //   break;
 
     default:
       return null;

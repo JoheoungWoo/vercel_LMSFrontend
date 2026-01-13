@@ -9,7 +9,7 @@ const StudentStatusSystem = () => {
   const [data, setData] = useState([]);
   const [activeTab, setActiveTab] = useState("PENDING");
   const [form, setForm] = useState({
-    changeType: "LEAVE",
+    changeType: "", // 원래대로 기본값 LEAVE
     reason: "",
     userId: "",
   });
@@ -45,31 +45,42 @@ const StudentStatusSystem = () => {
         studentFetchData(); // 학생은 전체 목록 조회
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.email, isAdmin]);
 
   const submit = () => {
-    if (!form.reason.trim()) {
-      alert("모든 필드를 입력하세요");
+    // alert로 안내하고 제출 취소 (디자인 원복 요청 반영)
+    if (!form.changeType) {
+      alert("유형을 선택해주세요.");
       return;
     }
 
-    form.userId = user.userId;
+    if (!form.reason.trim()) {
+      alert("사유를 입력해주세요.");
+      return;
+    }
+
+    const payload = {
+      ...form,
+      userId: user.userId,
+    };
 
     SSHistoryApi.config.funcs
-      .writeOne(form, user?.email)
+      .writeOne(payload, user?.email)
       .then((response) => {
-        console.log(form);
+        console.log(payload);
         alert("제출 완료");
-        setForm({ changeType: "LEAVE", reason: "", userId: "" });
+        setForm({ changeType: "", reason: "", userId: "" });
 
-        // 신청 후 해당 항목만 조회 (response에 statusHistoryId가 있다면)
         if (response?.statusHistoryId) {
           studentFetchData(response.statusHistoryId);
         } else {
-          studentFetchData(); // 없으면 전체 조회
+          studentFetchData();
         }
       })
-      .catch(() => alert("제출 실패"));
+      .catch(() => {
+        alert("제출 실패");
+      });
   };
 
   /* ================= ADMIN 전용 ================= */
@@ -237,6 +248,7 @@ const StudentStatusSystem = () => {
                 }
                 className="border rounded px-3 py-2"
               >
+                <option value="">선택해주세요</option>
                 <option value="LEAVE">LEAVE</option>
                 <option value="RETURN">RETURN</option>
                 <option value="GRADUATED">GRADUATED</option>

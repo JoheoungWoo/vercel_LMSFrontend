@@ -1,10 +1,59 @@
 import { useState, useCallback, useEffect } from "react";
 // 리팩토링된 API 파일 import
 import AttendanceApi from "../../api/AttendanceApi";
+import EnrollmentApi from "../../api/EnrollmentApi";
 
 export const useAttendanceManage = (offeringId, userEmail) => {
   const [attendances, setAttendances] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // ─────────────────────────────────────────────────────────────
+  //  수강생 목록 상태 관리
+  // ─────────────────────────────────────────────────────────────
+  const [studentList, setStudentList] = useState([]);
+
+  // 수강생 목록 가져오기 함수
+  const fetchStudents = useCallback(async () => {
+    // offeringId나 userEmail이 없으면 실행하지 않음 (안전장치)
+    if (!offeringId || !userEmail) return;
+
+    try {
+      // enrollmentApi 호출
+      const response = await EnrollmentApi.config.funcs.getStudentsByOffering(
+        offeringId,
+        userEmail
+      );
+
+      console.log(" 백엔드 응답 원본:", response);
+
+      // [핵심 수정 1] 데이터 꺼내는 로직을 안전하게 변경
+      // 1순위: response.data.data (axios raw response인 경우)
+      // 2순위: response.data (commonApi에서 data를 한 번 벗긴 경우)
+      // 3순위: response (바로 리스트가 온 경우)
+      let list = [];
+
+      if (Array.isArray(response)) {
+        list = response; // 바로 배열인 경우
+      } else if (Array.isArray(response?.data)) {
+        list = response.data; // ApiResponse.data 인 경우 (가장 유력)
+      } else if (Array.isArray(response?.data?.data)) {
+        list = response.data.data; // Axios object 인 경우
+      } else {
+        console.warn("데이터 형식을 찾을 수 없음:", response);
+      }
+
+      setStudentList(list);
+    } catch (err) {
+      console.error("수강생 목록 로드 실패:", err);
+      setStudentList([]);
+    }
+    // [핵심 수정 2] userEmail을 의존성 배열에 추가!
+  }, [offeringId, userEmail]);
+
+  // offeringId나 userEmail이 바뀔 때 수강생 목록 갱신
+  useEffect(() => {
+    fetchStudents();
+  }, [fetchStudents]);
 
   // ───────────────── 1. 조회 (Read) ─────────────────
   const fetchAttendances = useCallback(async () => {
@@ -48,7 +97,7 @@ export const useAttendanceManage = (offeringId, userEmail) => {
   const createAttendance = async (newItem) => {
     // 유효성 검사
     if (!newItem.enrollmentId) {
-      alert("수강생 ID(EnrollmentId)가 필요합니다.");
+      alert("수강생을 선택해주세요.");
       return false;
     }
 
@@ -142,6 +191,7 @@ export const useAttendanceManage = (offeringId, userEmail) => {
 
   return {
     attendances, // 조회된 데이터 목록
+    studentList,
     loading, // 로딩 상태
     createAttendance, // 생성 함수
     updateAttendance, // 수정 함수

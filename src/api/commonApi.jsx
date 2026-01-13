@@ -127,7 +127,7 @@ export const createExtraApi = (tableName) => {
 
     findMySections: async (userEmail) => {
       return axios
-        .get(`${API_SERVER_HOST}/api/class-section/my`, {
+        .get(`${API_SERVER_HOST}/api/${tableName}/my`, {
           headers: { "X-User-Email": userEmail },
         })
         .then((r) => r.data);
@@ -150,10 +150,14 @@ export const createExtraApi = (tableName) => {
 
     // ② 특정 강의(Offering) 하위 데이터 조회 (성적, 출결, 과제 등)
     // URL: /api/{tableName}/offering/{offeringId}
-    findByOffering: async (offeringId) => {
-      console.log(`[${tableName}] 과목별 조회: ${offeringId}`);
+    findByOffering: async (offeringId, userEmail) => {
+      console.log(
+        `[${tableName}] 과목별 조회: ${offeringId}, User: ${userEmail}`
+      );
       return axios
-        .get(`${API_SERVER_HOST}/api/${tableName}/offering/${offeringId}`)
+        .get(`${API_SERVER_HOST}/api/${tableName}/offering/${offeringId}`, {
+          headers: { "X-User-Email": userEmail },
+        })
         .then((r) => r.data);
     },
 

@@ -5,8 +5,6 @@ import { API_SERVER_HOST } from "../../api/commonApi";
 
 import GradePolicyManage from "../../components/features/grade/GradePolicyManage";
 import AttendanceManage from "../../components/features/attendance/AttendanceManage";
-// import AssignmentManage from "../../components/features/assignment/AssignmentManage";
-// import SubmissionReview from "../../components/features/assignment/SubmissionReview";
 import ScoreInput from "../../components/features/grade/ScoreInput";
 // import FinalGradeConfirm from "../../components/features/grade/FinalGradeConfirm";
 
@@ -26,7 +24,7 @@ const modalTypes = {
 /* =========================
    Main Dashboard
 ========================= */
-export default function ProfessorGradeLmsDashboard() {
+export default function ProfessorGradeLms() {
   const [activeModal, setActiveModal] = useState(null);
 
   // 1. 로그인 정보 가져오기 (리덕스)
@@ -245,7 +243,7 @@ export default function ProfessorGradeLmsDashboard() {
         </section>
 
         {/* 3. 과제 관리 */}
-        <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
+        {/* <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
           <SectionHeader
             tag="Assignment"
             tagColor="fuchsia"
@@ -266,7 +264,7 @@ export default function ProfessorGradeLmsDashboard() {
               onClick={() => setActiveModal(modalTypes.SUBMISSION_REVIEW)}
             />
           </div>
-        </section>
+        </section> */}
 
         {/* 4. 성적 처리 */}
         <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
@@ -284,11 +282,11 @@ export default function ProfessorGradeLmsDashboard() {
               description="학생별 평가 항목 점수를 입력합니다."
               onClick={() => setActiveModal(modalTypes.SCORE_INPUT)}
             />
-            <DashboardButton
+            {/* <DashboardButton
               label="최종 성적 확정"
               description="성적을 산출하고 최종 확정합니다."
               onClick={() => setActiveModal(modalTypes.FINAL_GRADE_CONFIRM)}
-            />
+            /> */}
           </div>
         </section>
       </div>

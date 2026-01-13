@@ -67,9 +67,8 @@ const NoticeList = () => {
               <tr className="border-b border-slate-200 bg-slate-50 text-left text-slate-600">
                 <th className="px-2 py-2 w-12 text-center">번호</th>
                 <th className="px-2 py-2">제목</th>
-                <th className="px-2 py-2">작성자</th>
+                <th className="px-2 py-2"></th>
                 <th className="px-2 py-2 text-center">작성일</th>
-                <th className="px-2 py-2 text-center">조회수</th>
               </tr>
             </thead>
 

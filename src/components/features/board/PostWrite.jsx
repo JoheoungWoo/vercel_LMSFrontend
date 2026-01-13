@@ -28,77 +28,76 @@ const PostWrite = ({ post, onPostCreated }) => {
     }
   }, [post]);
 
-/* ================= PostWrite.jsx 수정본 ================= */
-const handleSubmit = async () => {
-  if (!title.trim() || !content.trim()) {
-    alert("제목과 내용을 모두 입력해주세요.");
-    return;
-  }
+  /* ================= PostWrite.jsx 수정본 ================= */
+  const handleSubmit = async () => {
+    if (!title.trim() || !content.trim()) {
+      alert("제목과 내용을 모두 입력해주세요.");
+      return;
+    }
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    // 1. 서버의 PostDTO 구조에 맞게 데이터 재구성
-    const payload = {
-      title: title,
-      content: content,
-      // viewCount 등 기본값이 필요한 숫자 필드 초기화
-      viewCount: 0,
-      
-      // 2. UserDTO user 필드 대응 (객체 형태여야 함)
-      // 서버에서 이메일로 사용자를 찾는다면 아래와 같이 구성
-      user: {
-        email: "test@aaa.com" // 실제 DB에 존재하는 이메일이어야 합니다.
-      },
+      // 1. 서버의 PostDTO 구조에 맞게 데이터 재구성
+      const payload = {
+        title: title,
+        content: content,
+        // viewCount 등 기본값이 필요한 숫자 필드 초기화
+        viewCount: 0,
 
-      // 3. 만약 boardType 정보를 전달해야 한다면 
-      // 현재 DTO에는 board 필드가 CommentResponseDTO로 되어 있으니 확인 필요
-      // 일단 단순 필드로 추가하거나 필요 없다면 생략
-      boardType: boardType 
-    };
+        // 2. UserDTO user 필드 대응 (객체 형태여야 함)
+        // 서버에서 이메일로 사용자를 찾는다면 아래와 같이 구성
+        user: {
+          email: "test@aaa.com", // 실제 DB에 존재하는 이메일이어야 합니다.
+        },
 
-    console.log("최종 전송 데이터:", payload);
-
-    if (isEditMode) {
-      // 수정 시에는 postId를 반드시 포함
-      const updateDto = {
-        ...payload,
-        postId: post.postId
+        // 3. 만약 boardType 정보를 전달해야 한다면
+        // 현재 DTO에는 board 필드가 CommentResponseDTO로 되어 있으니 확인 필요
+        // 일단 단순 필드로 추가하거나 필요 없다면 생략
+        boardType: boardType,
       };
-      await PostApi.updatePost(updateDto);
-    } else {
-      // 생성
-      await PostApi.createPost(payload);
-    }
 
-    setSubmitted(true);
-    onPostCreated?.();
-    
-    if (!isEditMode) {
-      setTitle("");
-      setContent("");
+      console.log("최종 전송 데이터:", payload);
+
+      if (isEditMode) {
+        // 수정 시에는 postId를 반드시 포함
+        const updateDto = {
+          ...payload,
+          postId: post.postId,
+        };
+        await PostApi.updatePost(updateDto);
+      } else {
+        // 생성
+        await PostApi.createPost(payload);
+      }
+
+      setSubmitted(true);
+      onPostCreated?.();
+
+      if (!isEditMode) {
+        setTitle("");
+        setContent("");
+      }
+    } catch (err) {
+      // 에러 메시지 상세 출력
+      const errorMsg = err.response?.data || err.message;
+      console.error("서버 응답 에러:", errorMsg);
+      alert(
+        `저장 실패: ${
+          typeof errorMsg === "string" ? errorMsg : "데이터 형식을 확인하세요."
+        }`
+      );
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    // 에러 메시지 상세 출력
-    const errorMsg = err.response?.data || err.message;
-    console.error("서버 응답 에러:", errorMsg);
-    alert(`저장 실패: ${typeof errorMsg === 'string' ? errorMsg : '데이터 형식을 확인하세요.'}`);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   /* ================= JSX 레이아웃 ================= */
   return (
     <div className="flex flex-col space-y-3">
-      <select
-        value={boardType}
-        onChange={(e) => setBoardType(e.target.value)}
-        className="w-32 rounded border border-gray-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sky-500"
-      >
-        <option value="FREE">자유게시판</option>
-      </select>
-
+      <h2 className="w-32 rounded border border-gray-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sky-500">
+        자유게시판
+      </h2>
       <input
         value={title}
         onChange={(e) => setTitle(e.target.value)}

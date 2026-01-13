@@ -39,9 +39,9 @@ export default function StudentGradeViewer({ onClose }) {
     "학생";
 
   return (
-    <div className="relative w-full bg-slate-50 p-6 font-sans text-slate-800 max-h-[85vh] overflow-y-auto">
+    <div className="relative w-full bg-slate-50 p-6 font-sans text-slate-800">
       {/* 닫기 버튼 */}
-      {onClose && (
+      {/* {onClose && (
         <button
           onClick={onClose}
           className="absolute right-4 top-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200 transition"
@@ -60,8 +60,7 @@ export default function StudentGradeViewer({ onClose }) {
             />
           </svg>
         </button>
-      )}
-
+      )} */}
       <header className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">내 성적 조회</h1>
@@ -80,9 +79,7 @@ export default function StudentGradeViewer({ onClose }) {
           🔄 새로고침
         </button>
       </header>
-
       {/* ... (아래 UI 코드는 기존과 동일하게 유지) ... */}
-
       {/* 1. 요약 카드 (GPA) */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <SummaryCard
@@ -102,7 +99,6 @@ export default function StudentGradeViewer({ onClose }) {
           color="bg-slate-white text-slate-700 border-slate-200"
         />
       </div>
-
       <div className="flex flex-col lg:flex-row gap-6">
         {/* 좌측: 리스트 */}
         <div className="flex-1">

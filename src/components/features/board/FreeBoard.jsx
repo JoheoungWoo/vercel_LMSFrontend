@@ -60,7 +60,7 @@ export default function CommunityBoard() {
         {/* Header */}
         <h1 className="text-3xl font-extrabold text-sky-900 mb-1">커뮤니티</h1>
         <p className="text-sky-700 mb-5 text-sm">
-          자유게시판 · 질문 게시판 · 공지사항
+          자유게시판
         </p>
 
         {/* Tabs */}
@@ -115,7 +115,7 @@ export default function CommunityBoard() {
               </h2>
               <button
                 onClick={() => setSelectedPost(null)}
-                className="text-sky-500 hover:text-sky-700"
+                className="text-sky-500 hover:text-sky-700 justify-end"
               >
                 ✕
               </button>

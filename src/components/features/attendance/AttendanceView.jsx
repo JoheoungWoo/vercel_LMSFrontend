@@ -2,11 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useStudentAttendance } from "../../../hook/attendance/useStudentAttendance";
 
-// import { STATUS_OPTIONS } from "../../../constants/attendanceStatus"; // 경로 맞춰주세요
-import {
-  STATUS_OPTIONS,
-  StatusBadge,
-} from "../../../components/common/StatusBadge";
+import { STATUS_OPTIONS } from "../../../constants/attendanceStatus"; // 경로 맞춰주세요
+import { StatusBadge } from "../../../components/common/StatusBadge";
 import { formatDateKorean } from "../../../util/dateUtils"; // 경로 맞춰주세요
 
 export default function AttendanceView() {

@@ -76,7 +76,7 @@ export default function TimeTableManager({ onClose }) {
   };
   console.log("강의 목록 데이터 확인:", offeringList);
   return (
-    <div className="relative w-full bg-slate-50 p-6 font-sans text-slate-800 max-h-[85vh] overflow-y-auto">
+    <div className="relative w-full bg-slate-50 p-6 font-sans text-slate-800">
       {/* 닫기 버튼 */}
       {onClose && (
         <button

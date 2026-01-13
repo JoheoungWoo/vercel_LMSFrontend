@@ -2,7 +2,7 @@ import { useLocation } from "react-router-dom";
 import Navbar from "./Navbar";
 import Footer from "../layouts/Footer";
 import Header from "./Header";
-
+import { TfiMenu } from "react-icons/tfi";
 import { menus } from "../layouts/subheader/menuconfig";
 
 // 대시보드들

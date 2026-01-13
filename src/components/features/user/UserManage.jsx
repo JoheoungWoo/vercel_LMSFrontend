@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import UserApi from "../../../api/UserApi";
 import { useSelector } from "react-redux";
+import DepartmentApi from "../../../api/DepartmentApi";
 
 const UserManage = () => {
   const [users, setUsers] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [keyword, setKeyword] = useState("");
   const [editing, setEditing] = useState(null);
   const [showDeleted, setShowDeleted] = useState(false);
@@ -21,6 +23,7 @@ const UserManage = () => {
 
   useEffect(() => {
     loadUsers();
+    departmentFetch();
   }, []);
 
   const loadUsers = () => {
@@ -31,6 +34,18 @@ const UserManage = () => {
       })
       .catch((err) => {
         console.error("사용자 목록 불러오기 실패:", err);
+      });
+  };
+
+  const departmentFetch = () => {
+    DepartmentApi.config.funcs
+      .readAll(userSlice.email)
+      .then((result) => {
+        console.log(result);
+        setDepartments(result);
+      })
+      .catch((err) => {
+        console.error("학과 목록 불러오기 실패:", err);
       });
   };
 
@@ -348,13 +363,20 @@ const UserManage = () => {
 
               <div>
                 <label className="block text-sm font-semibold mb-1">학과</label>
-                <input
-                  value={form.deptName}
+                <select
+                  value={form.deptName || ""}
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, deptName: e.target.value }))
                   }
                   className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-                />
+                >
+                  <option value="">학과 선택</option>
+                  {departments.map((dept) => (
+                    <option key={dept.departmentId} value={dept.deptName}>
+                      {dept.deptName}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>

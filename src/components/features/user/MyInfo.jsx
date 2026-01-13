@@ -43,7 +43,6 @@ const MyInfo = () => {
         <div className="grid grid-cols-2 gap-4">
           <InfoItem label="이메일" value={findUser.email} />
           <InfoItem label="계정 상태" value="활성" />
-          <InfoItem label="가입일" value="추가하기" />
         </div>
       </section>
     </div>

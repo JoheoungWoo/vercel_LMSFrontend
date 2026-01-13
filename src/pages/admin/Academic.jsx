@@ -1,11 +1,10 @@
 // src/pages/adminmanagement/AdminAcademicDashboard.jsx
 import React, { useState } from "react";
-import CourseEnroll from "../../components/features/academic/CourseEnroll";
 import TermManage from "../../components/features/academic/TermManage";
 import CourseOfferingManage from "../../components/features/academic/CourseOfferingManage";
 import CourseManage from "../../components/features/academic/CourseManage";
-import ClassSectionManage from "../../components/features/academic/ClassSectionManage";
 import TimeTableManager from "../../components/features/academic/TimeTableManager";
+import { DashboardModal } from "../../components/common/DashboardModal";
 
 /* =========================
    Modal Types (관리자용)
@@ -117,11 +116,6 @@ export default function AdminAcademicDashboard() {
 
           <div className="space-y-3">
             <DashboardButton
-              label="분반 관리"
-              description="분반(ClassSection)을 생성합니다."
-              onClick={() => setActiveModal(modalTypes.CLASS_SECTION)}
-            />
-            <DashboardButton
               label="시간표 관리"
               description="강의실 배정 및 시간표를 입력합니다."
               onClick={() => setActiveModal(modalTypes.TIMETABLE_MANAGER)}
@@ -131,10 +125,17 @@ export default function AdminAcademicDashboard() {
       </div>
 
       {/* ===== 공통 모달 ===== */}
-      <DashboardModal
+      {/* <DashboardModal
         activeModal={activeModal}
         onClose={closeModal}
         modalContent={activeModal ? renderModalContent(activeModal) : null}
+      /> */}
+
+      {/* ===== 공통 모달 ===== */}
+      <DashboardModal
+        activeModal={activeModal}
+        onClose={closeModal}
+        renderModalContent={renderModalContent}
       />
     </div>
   );
@@ -207,35 +208,38 @@ function DashboardButton({ label, description, onClick }) {
 /* =========================
    Dashboard Modal
 ========================= */
-function DashboardModal({ activeModal, onClose, modalContent }) {
-  if (!activeModal || !modalContent) return null;
+// function DashboardModal({ activeModal, onClose, modalContent }) {
+//   if (!activeModal || !modalContent) return null;
 
-  const { title, subtitle, content } = modalContent;
+//   const { title, subtitle, content } = modalContent;
 
-  return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/25">
-      <div className="w-full max-w-3xl rounded-2xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-        {/* 헤더 영역 */}
-        <div className="mb-4 flex justify-between items-start">
-          <div>
-            <h3 className="text-lg font-semibold">{title}</h3>
-            <p className="text-xs text-slate-500">{subtitle}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600"
-          >
-            ✕
-          </button>
-        </div>
+//   return (
+//     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/25">
+//       {/* 모달 컨테이너 (높이 제한) */}
+//       <div className="w-full max-w-3xl max-h-[80vh] rounded-2xl bg-white p-6 shadow-xl overflow-hidden">
+//         {/* 헤더 영역 (고정) */}
+//         <div className="mb-4 flex items-start justify-between">
+//           <div>
+//             <h3 className="text-lg font-semibold">{title}</h3>
+//             <p className="text-xs text-slate-500">{subtitle}</p>
+//           </div>
+//           <button
+//             onClick={onClose}
+//             className="p-2 text-slate-400 hover:text-slate-600"
+//           >
+//             ✕
+//           </button>
+//         </div>
 
-        <div className="rounded-xl border border-dashed p-4 text-xs text-slate-500">
-          {content}
-        </div>
-      </div>
-    </div>
-  );
-}
+//         {/* 콘텐츠 영역 (스크롤) */}
+//         <div className="max-h-[60vh] overflow-y-auto rounded-xl border border-dashed p-4 text-xs text-slate-500">
+//           {content}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+
 /* =========================
    Modal Resolver
 ========================= */
@@ -263,14 +267,6 @@ function renderModalContent(activeModal) {
         subtitle: "CourseOffering",
         // hint: "학기 선택 → 과목 선택 → 담당 교수 배정 → 정원 설정 플로우를 추천합니다.",
         content: <CourseOfferingManage />,
-      };
-
-    case modalTypes.CLASS_SECTION:
-      return {
-        title: "분반 관리",
-        subtitle: "ClassSection",
-        // hint: "분반 번호, 정원, 연결된 강의 정보 설정 UI를 추천합니다.",
-        content: <ClassSectionManage />,
       };
 
     case modalTypes.TIMETABLE_MANAGER:

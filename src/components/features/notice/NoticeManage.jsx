@@ -32,43 +32,33 @@ const NoticeManage = () => {
   const [pageSize] = useState(6);
 
   const [removeTick, setRemoveTick] = useState(0);
-  const [loadingList, setLoadingList] = useState(false);
-
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
 
   /* ================= 목록 로딩 ================= */
   useEffect(() => {
-    setLoadingList(true);
-
     const funcs = NoticeApi.config?.funcs || {};
     const fetchAll =
-      funcs.all || funcs.readAll || funcs.getAll || funcs.list || funcs.readPage;
+      funcs.all ||
+      funcs.readAll ||
+      funcs.getAll ||
+      funcs.list ||
+      funcs.readPage;
 
-    if (!fetchAll) {
-      console.error("공지 전체 조회 함수 없음", funcs);
-      setLoadingList(false);
-      return;
-    }
+    if (!fetchAll) return;
 
-    fetchAll()
-      .then((res) => {
-        const payload = res?.data ?? res;
+    fetchAll().then((res) => {
+      const payload = res?.data ?? res;
+      let data = [];
 
-        let data = [];
-        if (Array.isArray(payload)) data = payload;
-        else if (Array.isArray(payload?.data)) data = payload.data;
-        else if (Array.isArray(payload?.content)) data = payload.content;
-        else if (Array.isArray(payload?.result)) data = payload.result;
+      if (Array.isArray(payload)) data = payload;
+      else if (Array.isArray(payload?.data)) data = payload.data;
+      else if (Array.isArray(payload?.content)) data = payload.content;
+      else if (Array.isArray(payload?.result)) data = payload.result;
 
-        setNotices(data.map((n) => ({ ...n, id: getId(n) })));
-      })
-      .catch((e) => {
-        console.error("공지 불러오기 실패:", e);
-        setNotices([]);
-      })
-      .finally(() => setLoadingList(false));
+      setNotices(data.map((n) => ({ ...n, id: getId(n) })));
+    });
   }, [removeTick]);
 
   /* ================= 검색 + 정렬 ================= */
@@ -78,11 +68,10 @@ const NoticeManage = () => {
     return notices
       .filter((n) => {
         if (!q) return true;
-        const title = (n?.title ?? "").toLowerCase();
-        const content = (n?.content ?? "").toLowerCase();
-        const author = (n?.nickname ?? n?.author ?? "").toLowerCase();
         return (
-          title.includes(q) || content.includes(q) || author.includes(q)
+          (n?.title ?? "").toLowerCase().includes(q) ||
+          (n?.content ?? "").toLowerCase().includes(q) ||
+          (n?.nickname ?? n?.author ?? "").toLowerCase().includes(q)
         );
       })
       .sort((a, b) => {
@@ -93,14 +82,9 @@ const NoticeManage = () => {
   }, [notices, query]);
 
   /* ================= 페이징 ================= */
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredSorted.length / pageSize)
-  );
-  const pageData = filteredSorted.slice(
-    (page - 1) * pageSize,
-    page * pageSize
-  );
+  const totalPages = Math.max(1, Math.ceil(filteredSorted.length / pageSize));
+
+  const pageData = filteredSorted.slice((page - 1) * pageSize, page * pageSize);
 
   useEffect(() => {
     setPage(1);
@@ -109,10 +93,7 @@ const NoticeManage = () => {
   /* ================= 모달 ================= */
   const openCreate = () => {
     setEditing(null);
-    setForm({
-      ...EMPTY_FORM,
-      author: loginState?.nickname ?? "",
-    });
+    setForm({ ...EMPTY_FORM, author: loginState?.nickname ?? "" });
     setModalOpen(true);
   };
 
@@ -137,51 +118,28 @@ const NoticeManage = () => {
 
   /* ================= API ================= */
   const saveNotice = async () => {
-    try {
-      if (editing?.id) {
-        // UPDATE
-        await NoticeApi.config.funcs.update(editing.id, {
-          title: form.title,
-          content: form.content,
-          importance: form.importance,
-        });
-      } else {
-        // CREATE
-        await NoticeApi.config.funcs.create({
-          title: form.title,
-          content: form.content,
-          importance: form.importance,
-          userId: loginState?.userId ?? null,
-        });
-      }
-
-      closeModal();
-      setRemoveTick((v) => v + 1);
-    } catch (e) {
-      console.error("공지 저장 실패:", e);
+    if (editing?.id) {
+      await NoticeApi.config.funcs.update(editing.id, {
+        title: form.title,
+        content: form.content,
+        importance: form.importance,
+      });
+    } else {
+      await NoticeApi.config.funcs.create({
+        title: form.title,
+        content: form.content,
+        importance: form.importance,
+        userId: loginState?.userId ?? null,
+      });
     }
+    closeModal();
+    setRemoveTick((v) => v + 1);
   };
 
-  const readNotice = async() => {
-    if (!window.confirm("이 공지를 모두 읽겠습니까?")) return;
-    
-    try{
-      await NoticeApi.config.funcs.readAll
-      setRemoveTick((v) => v + 1);
-    } catch (e) {
-      console.log("공지 리딩 실패", e)
-    }
-  }
-
-  const deleteNotice = async (noticeId) => {
-    if (!window.confirm("정말 이 공지를 삭제하시겠습니까?")) return;
-
-    try {
-      await NoticeApi.config.funcs.delete(noticeId);
-      setRemoveTick((v) => v + 1);
-    } catch (e) {
-      console.error("공지 삭제 실패:", e);
-    }
+  const deleteNotice = async (id) => {
+    if (!window.confirm("정말 삭제하시겠습니까?")) return;
+    await NoticeApi.config.funcs.delete(id);
+    setRemoveTick((v) => v + 1);
   };
 
   const togglePin = (id) => {
@@ -192,21 +150,21 @@ const NoticeManage = () => {
 
   /* ================= JSX ================= */
   return (
-    <div className="w-full max-w-[80%] max-h-[80vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl ring-1 ring-slate-200">
+    <div className="w-full max-w-5xl mx-auto rounded-2xl bg-white p-6 shadow-xl ring-1 ring-slate-200">
       {/* 헤더 */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
         <h1 className="text-3xl font-extrabold text-sky-800">공지사항</h1>
 
-        <div className="flex gap-2">
+        <div className="flex w-full sm:w-auto gap-2">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="공지 검색…"
-            className="rounded-xl border border-sky-200 px-3 py-2"
+            className="w-full sm:w-64 rounded-xl border border-sky-200 px-3 py-2"
           />
           <button
             onClick={openCreate}
-            className="rounded-xl bg-sky-600 px-4 py-2 text-white font-semibold"
+            className="rounded-xl bg-sky-600 px-4 py-2 text-white font-semibold whitespace-nowrap"
           >
             공지 등록
           </button>
@@ -214,32 +172,34 @@ const NoticeManage = () => {
       </div>
 
       {/* 리스트 */}
-      <ul className="mt-6 grid gap-4 md:grid-cols-2">
+      <ul className="mt-6 grid gap-4 grid-cols-1 lg:grid-cols-2">
         {pageData.map((n) => (
           <li key={n.id} className="rounded-2xl border p-5 shadow-sm">
-            <header className="flex justify-between items-start">
-              <h2 className="text-lg font-bold text-sky-800">{n.title}</h2>
-              {n.pinned && (
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
+            <header className="flex justify-between items-start gap-2">
+              <h2 className="text-lg font-bold text-sky-800 break-words">
+                {n.title}
+              </h2>
+              {/* {n.pinned && (
+                <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
                   고정
                 </span>
-              )}
+              )} */}
             </header>
 
             <p className="mt-2 text-sm text-sky-600">
               {(n.nickname ?? n.author) || ""} · {fmt(n.createdAt)}
             </p>
 
-            <p className="mt-3 text-sky-900">
+            <p className="mt-3 text-sky-900 break-words">
               {(n.content || "").length > 120
                 ? n.content.slice(0, 120) + "…"
                 : n.content}
             </p>
 
-            <div className="mt-4 flex justify-between items-center">
-              <span className="text-xs font-semibold text-sky-600">
+            <div className="mt-4 flex flex-wrap justify-between items-center gap-2">
+              {/* <span className="text-xs font-semibold text-sky-600">
                 중요도: {n.importance}
-              </span>
+              </span> */}
 
               <div className="flex gap-2">
                 <button
@@ -254,12 +214,12 @@ const NoticeManage = () => {
                 >
                   삭제
                 </button>
-                <button
+                {/* <button
                   onClick={() => togglePin(n.id)}
                   className="rounded-xl border px-3 py-1.5 text-sm"
                 >
                   {n.pinned ? "고정 해제" : "고정"}
-                </button>
+                </button> */}
               </div>
             </div>
           </li>
@@ -285,7 +245,7 @@ const NoticeManage = () => {
       {/* 모달 */}
       {modalOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40">
-          <div className="w-[520px] rounded-2xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
             <h2 className="text-xl font-extrabold text-sky-800 mb-4">
               {editing ? "공지 수정" : "공지 등록"}
             </h2>
@@ -315,7 +275,7 @@ const NoticeManage = () => {
               className="w-full mb-3 rounded-xl border px-3 py-2"
             />
 
-            <div className="flex gap-2 justify-end">
+            <div className="flex justify-end gap-2">
               <button onClick={closeModal}>취소</button>
               <button
                 onClick={saveNotice}

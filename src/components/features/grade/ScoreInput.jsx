@@ -1,139 +1,185 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { API_SERVER_HOST } from "../../../api/commonApi";
+import { useSelector } from "react-redux";
 
-const ScoreInput = ({ onClose }) => {
-  // ===== mock data =====
-  const MOCK_OFFERINGS = [
-    { offeringId: "1", courseName: "자료구조", year: 2025, semester: 1 },
-    { offeringId: "2", courseName: "운영체제", year: 2025, semester: 1 },
-  ];
-
-  const MOCK_GRADE_ITEMS = {
-    1: [
-      { itemId: "101", itemName: "중간고사", maxScore: 100 },
-      { itemId: "102", itemName: "기말고사", maxScore: 100 },
-    ],
-    2: [
-      { itemId: "201", itemName: "과제", maxScore: 40 },
-      { itemId: "202", itemName: "기말고사", maxScore: 100 },
-    ],
-  };
-
-  const MOCK_STUDENTS = [
-    { enrollmentId: "e1", studentId: "20230001", studentName: "김학생" },
-    { enrollmentId: "e2", studentId: "20230002", studentName: "이학생" },
-    { enrollmentId: "e3", studentId: "20230003", studentName: "박학생" },
-  ];
-
-  // ===== state =====
-  const [offerings, setOfferings] = useState([]);
+const ScoreInput = ({ offeringId }) => {
   const [gradeItems, setGradeItems] = useState([]);
+  const [students, setStudents] = useState([]);
   const [rows, setRows] = useState([]);
+  const [selectedItemId, setSelectedItemId] = useState("");
+  const [selectedStudentId, setSelectedStudentId] = useState("");
+  const [scores, setScores] = useState({});
 
-  const [selected, setSelected] = useState({
-    offeringId: "",
-    itemId: "",
-  });
+  const userEmail = useSelector((state) => state.loginSlice?.email);
 
-  // ===== effects =====
-  // 강의 목록 로딩 (mock)
+  // ================= 평가 항목 조회 =================
   useEffect(() => {
-    setOfferings(MOCK_OFFERINGS);
-  }, []);
+    if (!offeringId) return;
 
-  // 강의 선택 → 평가 항목
+    axios
+      .get(`${API_SERVER_HOST}/api/grade-item/offering/${offeringId}`)
+      .then((res) => setGradeItems(res.data || []))
+      .catch(() => setGradeItems([]));
+  }, [offeringId]);
+
+  // ================= 수강생 조회 =================
   useEffect(() => {
-    if (!selected.offeringId) return;
+    if (!offeringId) return;
 
-    setGradeItems(MOCK_GRADE_ITEMS[selected.offeringId] || []);
-    setRows([]);
-    setSelected((p) => ({ ...p, itemId: "" }));
-  }, [selected.offeringId]);
+    axios
+      .get(`${API_SERVER_HOST}/api/enrollment/my`, {
+        headers: { "X-User-Email": userEmail },
+      })
+      .then((res) => {
+        let data = res.data;
+        if (data && typeof data === "object" && !Array.isArray(data)) {
+          data = Object.values(data)[0] || [];
+        }
+        const studentsOnly = (data || []).filter((s) => s.role === "STUDENT");
+        setStudents(studentsOnly);
+      })
+      .catch(() => setStudents([]));
+  }, [offeringId, userEmail]);
 
-  // 평가 항목 선택 → 학생 목록
+  // ================= 점수 조회 =================
   useEffect(() => {
-    if (!selected.itemId) return;
-
-    // mock 학생 + 점수
-    const merged = MOCK_STUDENTS.map((s) => ({
-      ...s,
-      score: "",
-      modified: false,
-    }));
-
-    setRows(merged);
-  }, [selected.itemId]);
-
-  // ===== handlers =====
-  const changeScore = (enrollmentId, value) => {
-    setRows((prev) =>
-      prev.map((r) =>
-        r.enrollmentId === enrollmentId
-          ? { ...r, score: value, modified: true }
-          : r
-      )
-    );
-  };
-
-  const saveScore = (row) => {
-    if (row.score === "" || Number(row.score) < 0) {
-      alert("유효한 점수를 입력하세요.");
+    if (!selectedItemId || !selectedStudentId) {
+      setScores({});
+      setRows([]);
       return;
     }
 
-    alert(`${row.studentName} (${row.studentId}) : ${row.score}점 저장 (mock)`);
+    const fetchScore = async () => {
+      try {
+        // 1️⃣ userId + offeringId로 Enrollment 조회
+        const enrollmentRes = await axios.get(
+          `${API_SERVER_HOST}/api/enrollment/user/${selectedStudentId}/offering/${offeringId}`,
+          { headers: { "X-User-Email": userEmail } }
+        );
 
-    setRows((prev) =>
-      prev.map((r) =>
-        r.enrollmentId === row.enrollmentId ? { ...r, modified: false } : r
-      )
-    );
+        const enrollments = enrollmentRes.data || [];
+        if (!enrollments.length) {
+          setScores({});
+          setRows([]);
+          return;
+        }
+
+        const enrollmentId = enrollments[0].enrollmentId;
+
+        // 2️⃣ enrollmentId 기준 점수 조회
+        const scoreRes = await axios.get(
+          `${API_SERVER_HOST}/api/student-score/enrollments/${enrollmentId}`,
+          { headers: { "X-User-Email": userEmail } }
+        );
+
+        const targetScore = (scoreRes.data || []).find(
+          (s) => String(s.itemId) === String(selectedItemId)
+        );
+        const scoreValue = targetScore?.scoreObtained ?? "";
+
+        setScores({ [enrollmentId]: scoreValue });
+
+        // 3️⃣ row 생성
+        const student = students.find(
+          (s) => String(s.userId) === String(selectedStudentId)
+        );
+        if (student) {
+          setRows([
+            {
+              studentId: student.studentNumber,
+              studentName: student.nickname,
+              score: scoreValue,
+            },
+          ]);
+        } else {
+          setRows([]);
+        }
+      } catch (err) {
+        console.error("점수 조회 실패:", err);
+        setScores({});
+        setRows([]);
+      }
+    };
+
+    fetchScore();
+  }, [selectedItemId, selectedStudentId, offeringId, students, userEmail]);
+
+  // ================= 점수 입력/수정 추가 =================
+  const handleScoreChange = (e) => {
+    const value = e.target.value;
+    setRows((prev) => prev.map((r) => ({ ...r, score: value })));
   };
 
-  // ===== render =====
+  const handleScoreSave = async () => {
+    if (!selectedItemId || !selectedStudentId) return;
+
+    try {
+      // 1️⃣ userId + offeringId로 Enrollment 조회
+      const enrollmentRes = await axios.get(
+        `${API_SERVER_HOST}/api/enrollment/user/${selectedStudentId}/offering/${offeringId}`,
+        { headers: { "X-User-Email": userEmail } }
+      );
+      const enrollments = enrollmentRes.data || [];
+      if (!enrollments.length) return;
+      const enrollmentId = enrollments[0].enrollmentId;
+
+      // 2️⃣ enrollmentId 기준 점수 조회
+      const scoreRes = await axios.get(
+        `${API_SERVER_HOST}/api/student-score/enrollments/${enrollmentId}`,
+        { headers: { "X-User-Email": userEmail } }
+      );
+      const targetScore = (scoreRes.data || []).find(
+        (s) => String(s.itemId) === String(selectedItemId)
+      );
+
+      const scoreId = targetScore?.scoreId;
+      const scoreValue = rows[0]?.score ?? 0;
+
+      if (scoreId) {
+        // 3️⃣ 기존 점수 수정
+        await axios.put(
+          `${API_SERVER_HOST}/api/student-score/${scoreId}`,
+          { scoreId, scoreObtained: parseFloat(scoreValue) },
+          { headers: { "X-User-Email": userEmail } }
+        );
+        alert("점수 수정 완료!");
+      } else {
+        alert("해당 항목의 점수가 아직 없습니다.");
+      }
+    } catch (err) {
+      console.error("점수 저장 실패:", err);
+      alert("점수 저장 중 오류가 발생했습니다.");
+    }
+  };
+
   return (
-    <div className="relative w-full bg-white p-6 rounded-2xl">
-      {onClose && (
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 text-slate-400"
-        >
-          ✕
-        </button>
-      )}
+    <div className="w-full bg-white p-6 rounded-2xl">
+      <h2 className="mb-4 text-xl font-bold">점수 조회</h2>
 
-      <h2 className="mb-4 text-xl font-bold">세부 성적 입력 (Mock)</h2>
-
-      <div className="mb-6 flex gap-3">
+      <div className="mb-6 flex gap-4">
         <select
-          value={selected.offeringId}
-          onChange={(e) =>
-            setSelected((p) => ({
-              ...p,
-              offeringId: e.target.value,
-            }))
-          }
-          className="border rounded px-3 py-2"
-        >
-          <option value="">강의 선택</option>
-          {offerings.map((o) => (
-            <option key={o.offeringId} value={o.offeringId}>
-              {o.courseName} ({o.year}-{o.semester})
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={selected.itemId}
-          disabled={!selected.offeringId}
-          onChange={(e) =>
-            setSelected((p) => ({ ...p, itemId: e.target.value }))
-          }
-          className="border rounded px-3 py-2"
+          value={selectedItemId}
+          onChange={(e) => setSelectedItemId(e.target.value)}
+          className="border rounded px-3 py-2 flex-1"
         >
           <option value="">평가 항목 선택</option>
           {gradeItems.map((g) => (
             <option key={g.itemId} value={g.itemId}>
               {g.itemName} (배점 {g.maxScore})
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={selectedStudentId}
+          onChange={(e) => setSelectedStudentId(e.target.value)}
+          className="border rounded px-3 py-2 flex-1"
+        >
+          <option value="">학생 선택</option>
+          {students.map((s) => (
+            <option key={s.userId} value={s.userId}>
+              {s.nickname} ({s.studentNumber})
             </option>
           ))}
         </select>
@@ -145,48 +191,44 @@ const ScoreInput = ({ onClose }) => {
             <th className="p-2">학번</th>
             <th className="p-2">이름</th>
             <th className="p-2">점수</th>
-            <th className="p-2">상태</th>
-            <th className="p-2">동작</th>
           </tr>
         </thead>
         <tbody>
           {rows.length === 0 ? (
             <tr>
-              <td colSpan="5" className="text-center py-8 text-slate-400">
-                평가 항목을 선택하세요
+              <td colSpan="3" className="py-8 text-center text-slate-400">
+                평가 항목과 학생을 선택하세요
               </td>
             </tr>
           ) : (
-            rows.map((r) => (
-              <tr key={r.enrollmentId}>
+            rows.map((r, idx) => (
+              <tr key={idx}>
                 <td className="p-2">{r.studentId}</td>
                 <td className="p-2">{r.studentName}</td>
                 <td className="p-2 text-center">
                   <input
                     type="number"
+                    min="0"
                     value={r.score}
-                    onChange={(e) =>
-                      changeScore(r.enrollmentId, e.target.value)
-                    }
-                    className="w-20 border px-2 text-center"
+                    onChange={handleScoreChange}
+                    className="w-20 text-center border rounded"
                   />
-                </td>
-                <td className="p-2 text-center text-xs">
-                  {r.modified ? "수정됨" : "대기"}
-                </td>
-                <td className="p-2 text-center">
-                  <button
-                    onClick={() => saveScore(r)}
-                    className="text-indigo-600 font-bold"
-                  >
-                    저장
-                  </button>
                 </td>
               </tr>
             ))
           )}
         </tbody>
       </table>
+
+      {/* 점수 저장 버튼 추가 */}
+      {rows.length > 0 && (
+        <button
+          onClick={handleScoreSave}
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          점수 저장
+        </button>
+      )}
     </div>
   );
 };

@@ -19,7 +19,7 @@ const GradePolicyManage = ({ offeringId, userEmail }) => {
     createItem,
     updateItem,
     // deleteItem,
-    applyPreset,
+    // applyPreset 제거됨
   } = useProfessorGrade(offeringId, userEmail);
 
   // ───────────────── UI 상태 ─────────────────
@@ -292,62 +292,8 @@ const GradePolicyManage = ({ offeringId, userEmail }) => {
           </div>
         )}
       </div>
-
-      {/* 4. 기존 프리셋 기능 (간편 설정용으로 하단에 유지) */}
-      <div className="rounded-md border border-slate-200 bg-white p-4">
-        <h3 className="mb-3 font-semibold text-slate-800">
-          빠른 설정 (프리셋)
-        </h3>
-        <p className="text-xs text-slate-500 mb-3">
-          ※ 프리셋을 적용하면 현재 등록된 모든 항목이 삭제되고 새로 설정됩니다.
-        </p>
-        <div className="grid gap-3 md:grid-cols-2">
-          <PresetCard
-            title="기본 성적 정책"
-            desc="중간 30 · 기말 30 · 과제 20 · 출석 20"
-            onApply={() =>
-              applyPreset({
-                name: "기본",
-                midterm: 30,
-                final: 30,
-                assignment: 20,
-                attendance: 20,
-              })
-            }
-          />
-          <PresetCard
-            title="프로젝트 중심"
-            desc="중간 20 · 기말 20 · 과제 50 · 출석 10"
-            onApply={() =>
-              applyPreset({
-                name: "프로젝트",
-                midterm: 20,
-                final: 20,
-                assignment: 50,
-                attendance: 10,
-              })
-            }
-          />
-        </div>
-      </div>
     </div>
   );
 };
-
-// 프리셋 카드 컴포넌트
-const PresetCard = ({ title, desc, onApply }) => (
-  <div className="flex items-center justify-between rounded-md border border-slate-100 bg-slate-50 p-3">
-    <div>
-      <p className="font-medium text-slate-800">{title}</p>
-      <p className="text-xs text-slate-500">{desc}</p>
-    </div>
-    <button
-      onClick={onApply}
-      className="text-xs bg-white border border-slate-300 px-3 py-1.5 rounded hover:bg-slate-100"
-    >
-      적용
-    </button>
-  </div>
-);
 
 export default GradePolicyManage;

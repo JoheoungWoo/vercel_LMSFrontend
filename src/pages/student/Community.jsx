@@ -1,10 +1,9 @@
 // src/pages/studentmanagement/StudentCommunityDashboard.jsx
 import React, { useState } from "react";
 import NoticeList from "../../components/features/notice/NoticeList";
-import DepartmentNotice from "../../components/features/notice/DepartmentNotice";
-import FreeBoard from "../../components/features/board/FreeBoard";
 import PostWrite from "../../components/features/board/PostWrite";
 import CommunityBoard from "../../components/features/board/CommunityBoard";
+import { DashboardModal } from "../../components/common/DashboardModal";
 
 /* =========================
    Modal Types (학생용)
@@ -89,7 +88,12 @@ export default function StudentCommunityDashboard() {
       </div>
 
       {/* ===== 공통 모달 ===== */}
-      <DashboardModal activeModal={activeModal} onClose={closeModal} />
+      {/* <DashboardModal activeModal={activeModal} onClose={closeModal} /> */}
+      <DashboardModal
+        activeModal={activeModal}
+        onClose={closeModal}
+        renderModalContent={renderModalContent}
+      />
     </div>
   );
 }
@@ -157,31 +161,31 @@ function DashboardButton({ label, description, onClick }) {
 /* =========================
    Dashboard Modal
 ========================= */
-function DashboardModal({ activeModal, onClose }) {
-  if (!activeModal) return null;
+// function DashboardModal({ activeModal, onClose }) {
+//   if (!activeModal) return null;
 
-  const { title, subtitle, hint, content } = renderModalContent(activeModal);
+//   const { title, subtitle, hint, content } = renderModalContent(activeModal);
 
-  return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/25">
-      {/* 모달 컨테이너: 최대 높이 제한 */}
-      <div className="w-full max-w-3xl max-h-[80vh] rounded-2xl bg-white p-6 shadow-xl overflow-hidden">
-        <div className="mb-4 flex justify-between">
-          <div>
-            <h3 className="text-lg font-semibold">{title}</h3>
-            <p className="text-xs text-slate-500">{subtitle}</p>
-          </div>
-          <button onClick={onClose}>✕</button>
-        </div>
+//   return (
+//     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/25">
+//       {/* 모달 컨테이너: 최대 높이 제한 */}
+//       <div className="w-full max-w-3xl max-h-[80vh] rounded-2xl bg-white p-6 shadow-xl overflow-hidden">
+//         <div className="mb-4 flex justify-between">
+//           <div>
+//             <h3 className="text-lg font-semibold">{title}</h3>
+//             <p className="text-xs text-slate-500">{subtitle}</p>
+//           </div>
+//           <button onClick={onClose}>✕</button>
+//         </div>
 
-        {/* 콘텐츠 영역: 스크롤 처리 */}
-        <div className="rounded-xl border border-dashed p-4 text-xs text-slate-500 max-h-[60vh] overflow-y-auto">
-          {content}
-        </div>
-      </div>
-    </div>
-  );
-}
+//         {/* 콘텐츠 영역: 스크롤 처리 */}
+//         <div className="rounded-xl border border-dashed p-4 text-xs text-slate-500 max-h-[60vh] overflow-y-auto">
+//           {content}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 
 /* =========================
    Modal Resolver

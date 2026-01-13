@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
-import gradesAcademicRecordsRouter from "./gradesAcademicRecordsRouter";
+// import gradesAcademicRecordsRouter from "./gradesAcademicRecordsRouter";
 // import communityRouter from "./communityRouter";
 import accountRouter from "./accountRouter";
 
@@ -17,10 +17,10 @@ const root = createBrowserRouter([
     path: "",
     element: <Mainlayouts></Mainlayouts>,
   },
-  {
-    path: "gradesacademicrecords",
-    children: gradesAcademicRecordsRouter(),
-  },
+  // {
+  //   path: "gradesacademicrecords",
+  //   children: gradesAcademicRecordsRouter(),
+  // },
   // {
   //   path: "community",
   //   children: communityRouter(),
