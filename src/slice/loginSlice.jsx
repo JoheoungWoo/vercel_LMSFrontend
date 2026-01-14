@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { getCookie, removeCookie, setCookie } from "../util/cookieUtil";
-import { doLogin } from "../api/userApi";
+import { doLogin } from "../api/UserApi";
 
 const initialState = {
   email: "",
