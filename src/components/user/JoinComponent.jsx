@@ -126,7 +126,7 @@ const JoinComponent = () => {
           <div>
             <select name="role" value={form.role} onChange={changeHandler}>
               <option>학생</option>
-              <option>교수</option>
+              {/* <option>교수</option> */}
             </select>
           </div>
           {/* 약관 동의 */}

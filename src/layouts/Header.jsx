@@ -25,7 +25,7 @@ const Header = () => {
 
         {/* 🔹 CENTER : 타이틀 (진짜 중앙) */}
         <div className="text-center font-semibold text-lg tracking-wide">
-          <Link to="https://vercel-lms-frontend.vercel.app">
+          <Link to="https://lms.greenunivercity.store/">
             그린 대학교 학사 관리 시스템
           </Link>
         </div>
